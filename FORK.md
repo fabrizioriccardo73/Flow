@@ -49,6 +49,8 @@ Senza `release.keystore` nella root, l'APK di release esce **non firmato**. Per 
 
 ### Con GitHub Actions
 
+> **Al momento tutti i workflow del fork sono disattivati** (Actions → seleziona il workflow → "Enable workflow" per riattivarlo): per ora si compila solo in locale. Quando si riattiva `Fork build (FOSS)`, lasciare disattivati i workflow originali.
+
 Il workflow `Fork build (FOSS)` parte a ogni push su `main`, oppure a mano da Actions → "Run workflow". Esegue i test unitari FOSS, compila l'APK di release firmato con la chiave del fork e lo carica come artefatto.
 
 Servono quattro secret nel repository del fork (Settings → Secrets and variables → Actions):
