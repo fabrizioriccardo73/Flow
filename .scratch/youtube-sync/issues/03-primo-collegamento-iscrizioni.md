@@ -4,7 +4,7 @@
 
 **Blocked by:** 02 (Collegare e scollegare il Linked Account)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] Esiste l'interfaccia `YouTubeAccount` con le operazioni sulle iscrizioni (elenco paginato, aggiunta, rimozione) ed errori tipizzati, più una versione in memoria per i test
 - [x] Adattatore reale sulla YouTube Data API v3 per le iscrizioni

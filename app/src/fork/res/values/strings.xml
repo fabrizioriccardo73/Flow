@@ -22,15 +22,15 @@
     <!-- YouTube Sync: subscriptions, ticket 03 -->
     <string name="youtube_sync_sync_section">Sync</string>
     <string name="youtube_sync_now">Sync now</string>
-    <string name="youtube_sync_now_summary">Subscriptions between Flow and YouTube</string>
-    <string name="youtube_sync_reading">Reading subscriptions…</string>
+    <string name="youtube_sync_now_summary">Subscriptions and playlists between Flow and YouTube</string>
+    <string name="youtube_sync_reading">Reading YouTube…</string>
     <string name="youtube_sync_applying">Syncing…</string>
     <string name="youtube_sync_preview_first_title">First sync</string>
-    <string name="youtube_sync_preview_title">Sync subscriptions?</string>
+    <string name="youtube_sync_preview_title">Sync with YouTube?</string>
     <string name="youtube_sync_preview_body">Subscriptions to add on YouTube: %1$d\nSubscriptions to add in Flow: %2$d\nAlready on both: %3$d\n\nNothing is removed on either side.</string>
     <string name="youtube_sync_preview_confirm">Sync</string>
-    <string name="youtube_sync_nothing_to_do">Flow and YouTube already have the same subscriptions</string>
-    <string name="youtube_sync_rejected">YouTube refused %1$d channels; they will be retried.</string>
+    <string name="youtube_sync_nothing_to_do">Flow and YouTube are already in step</string>
+    <string name="youtube_sync_rejected">YouTube refused %1$d items; they will be retried.</string>
     <string name="youtube_sync_error_quota">YouTube\'s daily quota is used up. Try again tomorrow.</string>
     <string name="youtube_sync_error_auth">The YouTube account must be linked again.</string>
     <string name="youtube_sync_error_offline">Could not reach YouTube. Try again when online.</string>
@@ -39,12 +39,40 @@
     <string name="youtube_sync_preview_changes_body">On YouTube: %1$d to subscribe, %2$d to unsubscribe\nIn Flow: %3$d to subscribe, %4$d to unsubscribe</string>
     <string name="youtube_sync_done_changes">Synced. YouTube: +%1$d −%2$d. Flow: +%3$d −%4$d.</string>
     <!-- YouTube Sync: mass removal guard, ticket 05 -->
-    <string name="youtube_sync_mass_removal_title">Many subscriptions would be removed</string>
+    <string name="youtube_sync_mass_removal_title">Many items would be removed</string>
     <string name="youtube_sync_mass_removal_body">%1$d of %2$d subscriptions would be removed %3$s. If you did not remove them yourself, cancel: data may have been lost on the other side.</string>
     <string name="youtube_sync_mass_removal_more">and %1$d more</string>
     <string name="youtube_sync_mass_removal_confirm">Remove anyway</string>
     <string name="youtube_sync_side_flow">in Flow</string>
     <string name="youtube_sync_side_youtube">on YouTube</string>
+    <!-- YouTube Sync: playlists, status, notifications (tickets 06-11) -->
+    <string name="youtube_sync_mass_removal_playlists_body">%1$d of %2$d playlists would be deleted %3$s. If you did not delete them yourself, cancel: data may have been lost on the other side.</string>
+    <string name="youtube_sync_mass_removal_videos_body">%1$d of %2$d videos of “%3$s” would be removed %4$s. If you did not remove them yourself, cancel.</string>
+    <string name="youtube_sync_preview_playlists">Playlists: %1$d new from YouTube, %2$d to update, %3$d to delete in Flow, %4$d to delete on YouTube</string>
+    <string name="youtube_sync_preview_same_title">Already in Flow with the same title, kept separate: %1$s</string>
+    <string name="youtube_sync_done_playlists">Playlists: %1$d updated, %2$d new, %3$d deleted.</string>
+    <string name="youtube_sync_status_title">Status</string>
+    <string name="youtube_sync_status_never">Not synced yet · tap to sync</string>
+    <string name="youtube_sync_status_ok">Last synced %1$s</string>
+    <string name="youtube_sync_status_running">Syncing…</string>
+    <string name="youtube_sync_status_quota">Daily quota used up · resumes after %1$s</string>
+    <string name="youtube_sync_status_relink">Stopped · tap to link the account again</string>
+    <string name="youtube_sync_status_confirm">Waiting for you · tap to review the removals</string>
+    <string name="youtube_sync_status_offline">Waiting for the network · retrying</string>
+    <string name="youtube_sync_link_playlist">Link a playlist to YouTube</string>
+    <string name="youtube_sync_link_playlist_summary">For playlists created in Flow</string>
+    <string name="youtube_sync_link_playlist_title">Link to YouTube</string>
+    <string name="youtube_sync_link_playlist_body">A new private playlist with the same title, videos and order is created on your YouTube account. From then on the two stay in sync.</string>
+    <string name="youtube_sync_link_playlist_none">There are no Flow-only playlists.</string>
+    <string name="youtube_sync_link_playlist_item">%1$s · %2$d videos</string>
+    <string name="youtube_sync_link_playlist_confirm">Link</string>
+    <string name="youtube_sync_playlist_linked">“%1$s” is now linked to YouTube</string>
+    <string name="youtube_sync_saved_playlists_title">Playlists saved from others</string>
+    <string name="youtube_sync_saved_playlists_body">The official YouTube API cannot read the playlists you saved from other channels, so only your own playlists are synced.</string>
+    <string name="youtube_sync_relink_notification_title">YouTube Sync stopped</string>
+    <string name="youtube_sync_relink_notification_text">Flow can no longer access your YouTube account. Link it again to resume.</string>
+    <string name="youtube_sync_confirm_notification_title">YouTube Sync needs your OK</string>
+    <string name="youtube_sync_confirm_notification_text">A sync would remove %1$d items. Open to review them.</string>
     <!-- Coda -->
     <string name="coda_title">Queue</string>
     <string name="coda_added_toast">Added to the queue</string>

@@ -102,7 +102,155 @@ class YouTubeDataApiAccount
             try {
                 call(authorized(url).delete().build())
             } catch (e: YouTubeAccountException.ItemRejected) {
-                if (e.reason != "subscriptionNotFound" && e.reason != "notFound") throw e
+                if (e.reason !in NOT_FOUND) throw e
+            }
+        }
+
+        override suspend fun playlists(): List<RemotePlaylist> =
+            pages<PlaylistPage>("playlists") {
+                addQueryParameter("part", "snippet")
+                addQueryParameter("mine", "true")
+            }.flatMap { page ->
+                page.items.map { RemotePlaylist(it.id, it.snippet.title, PlaylistKind.OWNED, it.snippet.thumbnails.best()) }
+            }
+
+        override suspend fun playlistItems(playlistId: String): List<RemotePlaylistItem> =
+            pages<PlaylistItemPage>("playlistItems") {
+                addQueryParameter("part", "snippet")
+                addQueryParameter("playlistId", playlistId)
+            }.flatMap { page ->
+                page.items.mapNotNull { item ->
+                    val snippet = item.snippet
+                    val videoId = snippet.resourceId.videoId ?: return@mapNotNull null
+                    RemotePlaylistItem(
+                        itemId = item.id,
+                        videoId = videoId,
+                        title = snippet.title,
+                        channelTitle = snippet.videoOwnerChannelTitle.orEmpty(),
+                        channelId = snippet.videoOwnerChannelId.orEmpty(),
+                        thumbnailUrl = snippet.thumbnails.best(),
+                        // Deleted and private videos come without an owner channel.
+                        available = snippet.videoOwnerChannelId != null,
+                    )
+                }
+            }
+
+        override suspend fun createPlaylist(title: String): String {
+            val body =
+                buildJsonObject {
+                    putJsonObject("snippet") { put("title", title) }
+                    putJsonObject("status") { put("privacyStatus", "private") }
+                }
+            val url = "${base}playlists".toHttpUrl().newBuilder().addQueryParameter("part", "snippet,status").build()
+            return json.decodeFromString<IdOnly>(call(authorized(url).post(body.toString().toRequestBody(JSON)).build())).id
+        }
+
+        override suspend fun renamePlaylist(
+            playlistId: String,
+            title: String,
+        ) {
+            // An update replaces the whole snippet: send the description back so it is never changed.
+            val readUrl =
+                "${base}playlists"
+                    .toHttpUrl()
+                    .newBuilder()
+                    .addQueryParameter("part", "snippet")
+                    .addQueryParameter("id", playlistId)
+                    .build()
+            val current =
+                json.decodeFromString<PlaylistPage>(call(get(readUrl))).items.firstOrNull()
+                    ?: throw YouTubeAccountException.ItemRejected("playlistNotFound")
+            val body =
+                buildJsonObject {
+                    put("id", playlistId)
+                    putJsonObject("snippet") {
+                        put("title", title)
+                        put("description", current.snippet.description)
+                        current.snippet.defaultLanguage?.let { put("defaultLanguage", it) }
+                    }
+                }
+            val url = "${base}playlists".toHttpUrl().newBuilder().addQueryParameter("part", "snippet").build()
+            call(authorized(url).put(body.toString().toRequestBody(JSON)).build())
+        }
+
+        override suspend fun deletePlaylist(playlistId: String) {
+            val url = "${base}playlists".toHttpUrl().newBuilder().addQueryParameter("id", playlistId).build()
+            ignoringNotFound { call(authorized(url).delete().build()) }
+        }
+
+        override suspend fun addPlaylistItem(
+            playlistId: String,
+            videoId: String,
+        ): String {
+            val body =
+                buildJsonObject {
+                    putJsonObject("snippet") {
+                        put("playlistId", playlistId)
+                        putJsonObject("resourceId") {
+                            put("kind", "youtube#video")
+                            put("videoId", videoId)
+                        }
+                    }
+                }
+            val url = "${base}playlistItems".toHttpUrl().newBuilder().addQueryParameter("part", "snippet").build()
+            return json.decodeFromString<IdOnly>(call(authorized(url).post(body.toString().toRequestBody(JSON)).build())).id
+        }
+
+        override suspend fun removePlaylistItem(itemId: String) {
+            val url = "${base}playlistItems".toHttpUrl().newBuilder().addQueryParameter("id", itemId).build()
+            ignoringNotFound { call(authorized(url).delete().build()) }
+        }
+
+        override suspend fun movePlaylistItem(
+            playlistId: String,
+            itemId: String,
+            videoId: String,
+            position: Int,
+        ) {
+            val body =
+                buildJsonObject {
+                    put("id", itemId)
+                    putJsonObject("snippet") {
+                        put("playlistId", playlistId)
+                        put("position", position)
+                        putJsonObject("resourceId") {
+                            put("kind", "youtube#video")
+                            put("videoId", videoId)
+                        }
+                    }
+                }
+            val url = "${base}playlistItems".toHttpUrl().newBuilder().addQueryParameter("part", "snippet").build()
+            call(authorized(url).put(body.toString().toRequestBody(JSON)).build())
+        }
+
+        /** Reads every page of a list call, 50 items a time. */
+        private suspend inline fun <reified P : Paged> pages(
+            resource: String,
+            query: HttpUrl.Builder.() -> Unit,
+        ): List<P> {
+            val all = mutableListOf<P>()
+            var pageToken: String? = null
+            do {
+                val url =
+                    "$base$resource"
+                        .toHttpUrl()
+                        .newBuilder()
+                        .apply(query)
+                        .addQueryParameter("maxResults", "50")
+                        .apply { pageToken?.let { addQueryParameter("pageToken", it) } }
+                        .build()
+                val page = json.decodeFromString<P>(call(get(url)))
+                all += page
+                pageToken = page.nextPageToken
+            } while (pageToken != null)
+            return all
+        }
+
+        private inline fun ignoringNotFound(block: () -> Unit) {
+            try {
+                block()
+            } catch (e: YouTubeAccountException.ItemRejected) {
+                if (e.reason !in NOT_FOUND) throw e
             }
         }
 
@@ -165,6 +313,57 @@ class YouTubeDataApiAccount
         /** Internal marker: the subscription already exists. */
         private class Duplicate : Exception()
 
+        /** A page of a list call. */
+        interface Paged {
+            val nextPageToken: String?
+        }
+
+        @Serializable
+        private data class IdOnly(
+            val id: String,
+        )
+
+        @Serializable
+        data class PlaylistPage(
+            val items: List<PlaylistResource> = emptyList(),
+            override val nextPageToken: String? = null,
+        ) : Paged
+
+        @Serializable
+        data class PlaylistResource(
+            val id: String,
+            val snippet: PlaylistSnippet = PlaylistSnippet(),
+        )
+
+        @Serializable
+        data class PlaylistSnippet(
+            val title: String = "",
+            val description: String = "",
+            val defaultLanguage: String? = null,
+            val thumbnails: Thumbnails = Thumbnails(),
+        )
+
+        @Serializable
+        data class PlaylistItemPage(
+            val items: List<PlaylistItemResource> = emptyList(),
+            override val nextPageToken: String? = null,
+        ) : Paged
+
+        @Serializable
+        data class PlaylistItemResource(
+            val id: String,
+            val snippet: PlaylistItemSnippet = PlaylistItemSnippet(),
+        )
+
+        @Serializable
+        data class PlaylistItemSnippet(
+            val title: String = "",
+            val resourceId: ResourceId = ResourceId(),
+            val thumbnails: Thumbnails = Thumbnails(),
+            val videoOwnerChannelId: String? = null,
+            val videoOwnerChannelTitle: String? = null,
+        )
+
         @Serializable
         private data class SubscriptionPage(
             val items: List<SubscriptionItem> = emptyList(),
@@ -185,12 +384,13 @@ class YouTubeDataApiAccount
         )
 
         @Serializable
-        private data class ResourceId(
+        data class ResourceId(
             val channelId: String? = null,
+            val videoId: String? = null,
         )
 
         @Serializable
-        private data class Thumbnails(
+        data class Thumbnails(
             val default: Thumbnail? = null,
             val medium: Thumbnail? = null,
             val high: Thumbnail? = null,
@@ -199,7 +399,7 @@ class YouTubeDataApiAccount
         }
 
         @Serializable
-        private data class Thumbnail(
+        data class Thumbnail(
             val url: String = "",
         )
 
@@ -220,5 +420,8 @@ class YouTubeDataApiAccount
 
         private companion object {
             val JSON = "application/json; charset=utf-8".toMediaType()
+
+            /** Reasons meaning "already gone", for removals: the goal is reached. */
+            val NOT_FOUND = setOf("notFound", "subscriptionNotFound", "playlistNotFound", "playlistItemNotFound")
         }
     }

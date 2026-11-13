@@ -4,7 +4,7 @@
 
 **Blocked by:** 03 (Primo collegamento delle iscrizioni)
 
-**Status:** ready-for-agent
+**Status:** done (da verificare sul telefono, ticket 12)
 
 - [x] Un'iscrizione aggiunta in Flow viene creata su YouTube, e viceversa
 - [x] Una disiscrizione in Flow viene applicata su YouTube, e viceversa

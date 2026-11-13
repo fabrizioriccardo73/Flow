@@ -20,7 +20,9 @@ import io.github.aedev.flow.youtubesync.account.OAuthGateway
 import io.github.aedev.flow.youtubesync.account.SecretSealer
 import io.github.aedev.flow.youtubesync.account.YouTubeIdentityApi
 import io.github.aedev.flow.youtubesync.engine.SyncBaselineStore
+import io.github.aedev.flow.youtubesync.local.FlowLocalPlaylists
 import io.github.aedev.flow.youtubesync.local.FlowLocalSubscriptions
+import io.github.aedev.flow.youtubesync.local.LocalPlaylists
 import io.github.aedev.flow.youtubesync.local.LocalSubscriptions
 import io.github.aedev.flow.youtubesync.net.YouTubeSyncHttp
 import io.github.aedev.flow.youtubesync.net.YouTubeSyncHttpClient
@@ -28,6 +30,12 @@ import io.github.aedev.flow.youtubesync.remote.AccessTokenSource
 import io.github.aedev.flow.youtubesync.remote.LinkedAccountTokenSource
 import io.github.aedev.flow.youtubesync.remote.YouTubeAccount
 import io.github.aedev.flow.youtubesync.remote.YouTubeDataApiAccount
+import io.github.aedev.flow.youtubesync.runtime.Clock
+import io.github.aedev.flow.youtubesync.runtime.SyncNotifications
+import io.github.aedev.flow.youtubesync.runtime.SyncScheduling
+import io.github.aedev.flow.youtubesync.runtime.SyncStatusStore
+import io.github.aedev.flow.youtubesync.runtime.WorkManagerSyncScheduling
+import io.github.aedev.flow.youtubesync.runtime.YouTubeSyncNotifier
 import okhttp3.OkHttpClient
 import javax.inject.Singleton
 
@@ -40,6 +48,12 @@ private val Context.syncBaselineDataStore by safePreferencesDataStore(
 /** Profile-private, never backed up: the Linked Account belongs to one profile on this device only. */
 private val Context.linkedAccountDataStore by safePreferencesDataStore(
     name = "youtube_sync_account",
+    scope = StoreScope.PROFILE_PRIVATE,
+)
+
+/** Profile-private, never backed up: where this device's YouTube Sync stands. */
+private val Context.syncStatusDataStore by safePreferencesDataStore(
+    name = "youtube_sync_status",
     scope = StoreScope.PROFILE_PRIVATE,
 )
 
@@ -62,12 +76,30 @@ abstract class YouTubeSyncModule {
     abstract fun localSubscriptions(impl: FlowLocalSubscriptions): LocalSubscriptions
 
     @Binds
+    abstract fun localPlaylists(impl: FlowLocalPlaylists): LocalPlaylists
+
+    @Binds
+    abstract fun scheduling(impl: WorkManagerSyncScheduling): SyncScheduling
+
+    @Binds
+    abstract fun notifications(impl: YouTubeSyncNotifier): SyncNotifications
+
+    @Binds
     abstract fun secretSealer(impl: KeystoreSecretSealer): SecretSealer
 
     companion object {
         @Provides
         @Singleton
         fun oauthConfig(): OAuthConfig = OAuthConfig.fromBuild()
+
+        @Provides
+        fun clock(): Clock = Clock { System.currentTimeMillis() }
+
+        @Provides
+        @Singleton
+        fun syncStatusStore(
+            @ApplicationContext context: Context,
+        ): SyncStatusStore = SyncStatusStore(context.syncStatusDataStore)
 
         @Provides
         @Singleton

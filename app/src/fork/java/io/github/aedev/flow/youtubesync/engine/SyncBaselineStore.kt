@@ -12,6 +12,16 @@ import kotlinx.serialization.json.Json
 @Serializable
 data class SyncBaseline(
     val subscriptions: Set<String> = emptySet(),
+    /** Owned Playlists and Saved Playlists, by YouTube id. */
+    val playlists: Map<String, PlaylistBaseline> = emptyMap(),
+)
+
+/** What Flow and YouTube last agreed on for one playlist: its title and its videos, in order. */
+@Serializable
+data class PlaylistBaseline(
+    val title: String,
+    val videos: List<String>,
+    val saved: Boolean = false,
 )
 
 /**

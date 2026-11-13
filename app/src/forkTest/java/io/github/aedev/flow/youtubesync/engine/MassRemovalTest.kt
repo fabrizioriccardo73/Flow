@@ -35,7 +35,7 @@ class MassRemovalTest {
         runBlocking {
             val flow = FakeLocalSubscriptions(*channels)
             val youTube = FakeYouTubeAccount(*channels)
-            val sync = YouTubeSync(flow, youTube, baselines)
+            val sync = YouTubeSync(flow, youTube, baselines, FakeLocalPlaylists())
             sync.apply(sync.plan())
             Triple(flow, youTube, sync)
         }

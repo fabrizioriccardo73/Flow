@@ -9,13 +9,18 @@ import io.github.aedev.flow.youtubesync.account.LinkedAccountException
 import io.github.aedev.flow.youtubesync.account.LinkedAccountManager
 import io.github.aedev.flow.youtubesync.engine.SyncPlan
 import io.github.aedev.flow.youtubesync.engine.SyncResult
-import io.github.aedev.flow.youtubesync.engine.YouTubeSync
+import io.github.aedev.flow.youtubesync.local.LocalPlaylist
+import io.github.aedev.flow.youtubesync.local.LocalPlaylistKind
+import io.github.aedev.flow.youtubesync.local.LocalPlaylists
 import io.github.aedev.flow.youtubesync.remote.YouTubeAccountException
+import io.github.aedev.flow.youtubesync.runtime.SyncStatus
+import io.github.aedev.flow.youtubesync.runtime.YouTubeSyncRunner
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -45,6 +50,10 @@ sealed interface SyncMessage {
 
     data object NothingToDo : SyncMessage
 
+    data class PlaylistLinked(
+        val title: String,
+    ) : SyncMessage
+
     data class Failed(
         val error: YouTubeAccountException,
     ) : SyncMessage
@@ -55,9 +64,16 @@ class YouTubeSyncViewModel
     @Inject
     constructor(
         private val manager: LinkedAccountManager,
-        private val sync: YouTubeSync,
+        private val runner: YouTubeSyncRunner,
+        private val playlists: LocalPlaylists,
     ) : SettingsViewModel() {
         val account: StateFlow<LinkedAccount?> = manager.account.asState(null)
+
+        /** For the status indicator. */
+        val status: StateFlow<SyncStatus> = runner.state.asState(SyncStatus())
+
+        /** True while any YouTube Sync runs, the background ones included. */
+        val running: StateFlow<Boolean> = runner.running
 
         val isConfigured: Boolean get() = manager.isConfigured
 
@@ -77,8 +93,8 @@ class YouTubeSyncViewModel
             _working.value = true
             viewModelScope.launch {
                 runCatching {
-                    manager.completeLink(result)
-                    sync.forgetBaseline()
+                    val previous = manager.account.first()
+                    runner.onLinked(previous, manager.completeLink(result))
                 }.onSuccess { _messages.send(LinkMessage.LINKED) }
                     .onFailure { _messages.send(it.toMessage()) }
                 _working.value = false
@@ -89,7 +105,7 @@ class YouTubeSyncViewModel
             _working.value = true
             viewModelScope.launch {
                 manager.unlink()
-                sync.forgetBaseline()
+                runner.onUnlinked()
                 _messages.send(LinkMessage.UNLINKED)
                 _working.value = false
             }
@@ -107,9 +123,9 @@ class YouTubeSyncViewModel
             _syncState.value = SyncUiState.Planning
             viewModelScope.launch {
                 try {
-                    val plan = sync.plan()
+                    val plan = runner.plan()
                     if (plan.isEmpty) {
-                        sync.apply(plan) // records the baseline even when both sides already agree
+                        runner.apply(plan, massRemovalConfirmed = false) // records the baseline even when both sides already agree
                         _syncMessages.send(SyncMessage.NothingToDo)
                         _syncState.value = SyncUiState.Idle
                     } else {
@@ -130,7 +146,7 @@ class YouTubeSyncViewModel
             viewModelScope.launch {
                 try {
                     // The preview showed the mass-removal warning, so confirming it confirms that too.
-                    _syncMessages.send(SyncMessage.Done(sync.apply(preview.plan, massRemovalConfirmed = true)))
+                    _syncMessages.send(SyncMessage.Done(runner.apply(preview.plan, massRemovalConfirmed = true)))
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
@@ -143,6 +159,38 @@ class YouTubeSyncViewModel
         /** Closing the preview applies nothing. */
         fun cancelSync() {
             if (_syncState.value is SyncUiState.Preview) _syncState.value = SyncUiState.Idle
+        }
+
+        private val _flowOnly = MutableStateFlow<List<LocalPlaylist>?>(null)
+
+        /** The Flow-only playlists that can be linked, while the picker is open; null when closed. */
+        val flowOnly: StateFlow<List<LocalPlaylist>?> = _flowOnly.asStateFlow()
+
+        fun pickPlaylistToLink() {
+            viewModelScope.launch {
+                _flowOnly.value = playlists.all().filter { it.kind == LocalPlaylistKind.FLOW_ONLY }.sortedBy { it.title.lowercase() }
+            }
+        }
+
+        fun closePlaylistPicker() {
+            _flowOnly.value = null
+        }
+
+        /** "Collega a YouTube" (ticket 10). */
+        fun linkPlaylist(playlist: LocalPlaylist) {
+            _flowOnly.value = null
+            _working.value = true
+            viewModelScope.launch {
+                try {
+                    runner.linkPlaylist(playlist.localId)
+                    _syncMessages.send(SyncMessage.PlaylistLinked(playlist.title))
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    _syncMessages.send(SyncMessage.Failed(e.asAccountError()))
+                }
+                _working.value = false
+            }
         }
 
         private fun Exception.asAccountError(): YouTubeAccountException =

@@ -46,6 +46,7 @@ import io.github.aedev.flow.utils.newPipeLocalization
 import io.github.aedev.flow.utils.potoken.NewPipePoTokenProvider
 import io.github.aedev.flow.utils.potoken.VisitorIdentityStore
 import io.github.aedev.flow.utils.potoken.WebPoTokenSession
+import io.github.aedev.flow.youtubesync.runtime.YouTubeSyncStartup // fork
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -202,6 +203,7 @@ class FlowApplication :
             launch { profileWorkReconciler.reconcile() }
             launch { AutoBackupWorker.keepScheduled(this@FlowApplication) }
             launch { postSwitchWork.runIfSwitched() }
+            launch { YouTubeSyncStartup.start(this@FlowApplication, this) } // fork: YouTube Sync
             BackgroundCheckScheduler.follow(this@FlowApplication, playerPreferences)
         }
         SleepTimerManager.attachExitCallback { PlaybackShutdown.closeApp(this) }

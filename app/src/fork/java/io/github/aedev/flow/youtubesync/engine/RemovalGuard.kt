@@ -3,8 +3,8 @@ package io.github.aedev.flow.youtubesync.engine
 /** Which side of the YouTube Sync a change lands on. */
 enum class SyncSide { FLOW, YOUTUBE }
 
-/** The kinds of things the YouTube Sync carries. Playlists join with ticket 09. */
-enum class SyncCollection { SUBSCRIPTIONS, }
+/** The kinds of things the YouTube Sync carries. */
+enum class SyncCollection { SUBSCRIPTIONS, PLAYLISTS, PLAYLIST_VIDEOS }
 
 /**
  * A YouTube Sync that would remove too many items from one [collection] on one [side]: it must not be
@@ -17,6 +17,8 @@ data class MassRemoval(
     val items: List<String>,
     /** How many items the collection holds on that side before the run. */
     val total: Int,
+    /** For [SyncCollection.PLAYLIST_VIDEOS]: the title of the playlist that would lose them. */
+    val container: String? = null,
 ) {
     val count: Int get() = items.size
 }
@@ -43,12 +45,13 @@ object RemovalGuard {
         side: SyncSide,
         removing: List<String>,
         total: Int,
+        container: String? = null,
     ): MassRemoval? {
         val count = removing.size
         if (count == 0) return null
         val tooMany = count > MAX_REMOVALS
         val tooLargeShare = count >= MIN_REMOVALS_FOR_SHARE && count > total * MAX_SHARE
-        return if (tooMany || tooLargeShare) MassRemoval(collection, side, removing, total) else null
+        return if (tooMany || tooLargeShare) MassRemoval(collection, side, removing, total, container) else null
     }
 }
 

@@ -34,7 +34,7 @@ class FirstLinkSubscriptionsTest {
     private fun sync(
         flow: FakeLocalSubscriptions,
         youTube: FakeYouTubeAccount,
-    ) = YouTubeSync(flow, youTube, baselines)
+    ) = YouTubeSync(flow, youTube, baselines, FakeLocalPlaylists())
 
     @Test
     fun `the first link unites both lists and removes nothing`() =

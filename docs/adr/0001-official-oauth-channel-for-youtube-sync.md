@@ -2,7 +2,7 @@
 
 Il progetto Flow originale esclude qualsiasi login Google per motivi di privacy e per il rischio di ban degli account. Questo fork, ad uso personale, aggiunge comunque la YouTube Sync di iscrizioni e Owned Playlist tramite l'API ufficiale di YouTube (YouTube Data API v3) autorizzata con OAuth. È la via sanzionata da Google, quindi praticamente senza rischio di ban. Il token serve **solo** alla YouTube Sync: riproduzione e navigazione restano anonime come nel progetto originale, così l'account Google non viene mai legato all'estrazione non ufficiale dei flussi.
 
-Il progetto Google Cloud è personale e pubblicato in "Production" senza verifica. Si accetta la schermata di avviso, in cambio di refresh token che non scadono, a differenza dei 7 giorni della modalità "Testing".
+Il progetto Google Cloud è personale. L'idea era pubblicarlo in "Production" senza verifica, accettando la schermata di avviso in cambio di refresh token che non scadono. La pubblicazione non è riuscita, quindi per ora il progetto resta in "Testing": i refresh token scadono dopo 7 giorni e la YouTube Sync chiede di ricollegare l'account con la notifica "Ricollega l'account". Ricollegando lo stesso account si riparte da dove ci si era fermati.
 
 ## Considered Options
 

@@ -4,12 +4,12 @@
 
 **Blocked by:** 04 (Sincronizzazione continua delle iscrizioni)
 
-**Status:** ready-for-agent
+**Status:** done (da verificare sul telefono, ticket 12)
 
 - [x] La soglia scatta quando il piano rimuove più del 10% degli elementi di una collezione oppure più di 20 elementi, su uno qualsiasi dei due lati
 - [x] Viene mostrato cosa verrebbe rimosso e da quale lato; posso confermare o rifiutare
 - [x] Rifiutando non viene applicato nulla di quella YouTube Sync e la Sync Baseline resta invariata
-- [ ] In background (senza interfaccia) la YouTube Sync si sospende e notifica che serve una conferma
+- [x] In background (senza interfaccia) la YouTube Sync si sospende e notifica che serve una conferma (fatto nel ticket 06)
 - [x] La protezione è generica per collezione, così che valga anche per le playlist (ticket 09)
 - [x] Test sul seam principale: scenario "dati locali svuotati con Sync Baseline presente" non tocca YouTube senza conferma
 

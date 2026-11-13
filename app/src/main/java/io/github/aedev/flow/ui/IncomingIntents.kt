@@ -20,6 +20,7 @@ import io.github.aedev.flow.ui.components.settings.SettingsDestination
 import io.github.aedev.flow.ui.components.settings.SettingsTarget
 import io.github.aedev.flow.ui.screens.update.UPDATE_ROUTE
 import io.github.aedev.flow.utils.PLAYLIST_FILE_MIME_TYPE
+import io.github.aedev.flow.youtubesync.runtime.YouTubeSyncNotifier // fork
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -99,6 +100,11 @@ internal class IncomingIntents(
         if (intent.getBooleanExtra(NotificationHelper.EXTRA_OPEN_LINKED, false)) {
             intent.removeExtra(NotificationHelper.EXTRA_OPEN_LINKED)
             links.openRoute("settings?target=${SettingsTarget(SettingsDestination.SYNC).encode()}")
+            return
+        }
+        if (intent.getBooleanExtra(YouTubeSyncNotifier.EXTRA_OPEN_YOUTUBE_SYNC, false)) { // fork: YouTube Sync
+            intent.removeExtra(YouTubeSyncNotifier.EXTRA_OPEN_YOUTUBE_SYNC)
+            links.openRoute("settings?target=${SettingsTarget(SettingsDestination.YOUTUBE_SYNC).encode()}")
             return
         }
         if (intent.getBooleanExtra(NotificationHelper.EXTRA_OPEN_UPDATE, false)) {

@@ -14,3 +14,9 @@
 - [ ] Notifica "Ricollega l'account" verificata revocando l'accesso dalla pagina dell'account Google
 - [ ] Scollegamento e ricollegamento verificati
 - [ ] Problemi trovati registrati come nuovi ticket in `.scratch/youtube-sync/issues/`
+
+## Comments
+
+- 2026-11-13: tutti i ticket da cui dipende (05, 07, 10, 11) sono implementati e coperti da test JVM (92 test del fork, tutti verdi). Questa verifica richiede l'account Google reale, il telefono, la Firestick e la revoca dell'accesso dalla pagina dell'account Google: va fatta a mano (ready-for-human). Nessun dispositivo era collegato via adb.
+- Test dell'intera app: 5.899 test. Falliscono solo `ProfileInitialTest` e `MusicBrainRankerTest`, che falliscono uguali anche su Flow originale senza modifiche (commit c03f90070, verificato in un worktree pulito). Non dipendono dal fork.
+- APK da installare: `app/build/outputs/apk/foss/debug/app-foss-universal-debug.apk`.

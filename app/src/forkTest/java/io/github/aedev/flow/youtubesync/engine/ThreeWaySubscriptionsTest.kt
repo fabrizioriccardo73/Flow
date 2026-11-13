@@ -27,7 +27,7 @@ class ThreeWaySubscriptionsTest {
         )
     private val flow = FakeLocalSubscriptions("A", "B", "C")
     private val youTube = FakeYouTubeAccount("A", "B", "C")
-    private val sync = YouTubeSync(flow, youTube, baselines)
+    private val sync = YouTubeSync(flow, youTube, baselines, FakeLocalPlaylists())
 
     /** Every test starts after a first link where both sides hold A, B and C. */
     @Before
@@ -166,7 +166,7 @@ class ThreeWaySubscriptionsTest {
                     override suspend fun unsubscribe(subscriptionId: String): Unit = throw YouTubeAccountException.Transient()
                 }
 
-            val result = YouTubeSync(flow, failing, baselines).apply(sync.plan())
+            val result = YouTubeSync(flow, failing, baselines, FakeLocalPlaylists()).apply(sync.plan())
 
             assertThat(result.stoppedBy).isInstanceOf(YouTubeAccountException.Transient::class.java)
             assertThat(baselines.read()?.subscriptions).contains("B")
