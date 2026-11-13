@@ -47,3 +47,25 @@ _Avoid_: playlist esterna, playlist seguita
 **Flow-only**:
 Un dato che non lascia mai l'ecosistema Flow (per esempio gruppi di iscrizioni, preferiti, note): viaggia con la Device Sync ma non con la YouTube Sync.
 _Avoid_: locale, solo locale
+
+**Device-local**:
+Un dato che non lascia mai il dispositivo su cui nasce: non viaggia né con la Device Sync né con la YouTube Sync (per esempio la Coda).
+_Avoid_: locale, solo locale, Flow-only
+
+**Coda di invio**:
+Le modifiche locali della YouTube Sync in attesa di essere inviate a YouTube.
+_Avoid_: coda (senza qualificatore), queue
+
+## Riproduzione video
+
+**Coda**:
+La lista ordinata di video che l'utente ha scelto di vedere a breve; parte quando il Contesto di riproduzione è esaurito, e un video ne esce quando finisce, viene saltato o viene segnato come visto (non quando viene interrotto). È Device-local e ce n'è una per profilo. Non riguarda la musica né gli Shorts.
+_Avoid_: queue, playlist, coda di riproduzione, Guarda più tardi
+
+**Contesto di riproduzione**:
+Ciò che l'utente ha avviato esplicitamente: una playlist oppure un singolo video. Ha la precedenza sulla Coda.
+_Avoid_: coda, queue, playlist in corso
+
+**Autoplay**:
+I video suggeriti che il player riproduce quando sia il Contesto di riproduzione sia la Coda sono esauriti.
+_Avoid_: coda, prossimi, consigliati
