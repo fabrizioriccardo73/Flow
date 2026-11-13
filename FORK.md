@@ -28,10 +28,10 @@ Il fork si installa **accanto** a Flow originale. La Device Sync resta compatibi
 
 Per tenere semplici i merge dal progetto originale, le modifiche sono isolate:
 
-- `app/fork.gradle` contiene `applicationId` e le risorse del fork. `app/build.gradle.kts` lo applica con **una sola riga** in fondo al file.
-- `app/src/fork/res/` contiene le risorse del fork, per esempio il nome nel launcher.
+- `app/fork.gradle` contiene `applicationId`, la configurazione OAuth, la dipendenza AppAuth e le cartelle del fork. `app/build.gradle.kts` lo applica con **una sola riga** in fondo al file.
+- `app/src/fork/java/` e `app/src/fork/res/` contengono il codice (package `io.github.aedev.flow.youtubesync`) e le stringhe della YouTube Sync. `app/src/forkTest/java/` contiene i suoi test. `app/src/forkFoss/res/` contiene il nome nel launcher.
+- Le uniche righe toccate nei file originali, tutte marcate `// fork`, servono ad aggiungere la pagina "YouTube Sync" alle impostazioni. Sono in `SettingsDestination.kt`, `DestinationIndex.kt`, `SettingsDetail.kt` e `IntegrationsScreen.kt`.
 - `.github/workflows/fork-build.yml` è la build del fork. I workflow originali (`build.yml`, `codeql.yml`, `labeler.yml`) **non vengono modificati**: sono disattivati dalle impostazioni Actions del fork.
-- Il codice della YouTube Sync vivrà in un'area separata (vedi `docs/adr/0002-…`).
 
 ## Build
 
@@ -86,6 +86,41 @@ gh secret set FORK_KEY_PASSWORD --repo fabrizioriccardo73/Flow
 
 Gli ultimi due comandi chiedono la password in modo interattivo, così non finisce nella cronologia della shell.
 
+## Collegare l'account YouTube (Google Cloud)
+
+La YouTube Sync usa un progetto Google Cloud **tuo**, per uso personale. Le impostazioni di quel progetto si gestiscono solo dalla console di Google, quindi questi passi li fai tu, una volta sola.
+
+1. Su [console.cloud.google.com](https://console.cloud.google.com) crea un progetto, per esempio "Flow YT".
+2. In **API e servizi → Libreria** attiva **YouTube Data API v3**.
+3. In **Google Auth Platform**:
+   - **Branding**: inserisci nome dell'app ed email di supporto.
+   - **Destinatari**: scegli il tipo **Esterno** e aggiungi il tuo account tra gli utenti di test.
+   - **Accesso ai dati**: aggiungi l'ambito `https://www.googleapis.com/auth/youtube`.
+4. Sempre in **Destinatari**, pubblica l'app **in produzione** senza richiedere la verifica. In modalità "Test" il login scade dopo 7 giorni. Al primo accesso Google mostrerà l'avviso "app non verificata": è previsto.
+5. In **Client** crea un client OAuth di tipo **Android**:
+   - Nome pacchetto: `io.github.fabrizioriccardo73.flow.debug` per la build di debug, oppure `io.github.fabrizioriccardo73.flow` per la release.
+   - Impronta SHA-1 della chiave che firma l'APK. Per la build di debug:
+     ```bash
+     keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android | grep SHA1
+     ```
+   - In **Impostazioni avanzate** attiva **Schema URI personalizzato**. Serve perché AppAuth riceve la risposta su `<nome pacchetto>:/oauth2redirect`.
+6. Copia l'ID client in `local.properties`, che non viene committato:
+   ```properties
+   youtubeSync.oauthClientId=1234567890-abc.apps.googleusercontent.com
+   ```
+7. Compila e installa la build di debug:
+   ```bash
+   ./gradlew :app:assembleFossDebug
+   ```
+8. In Flow YT apri Impostazioni → Integrazioni → **YouTube Sync** → **Collega account YouTube**.
+
+**Se l'opzione "Schema URI personalizzato" non c'è** (Google la sta eliminando per i client Android), crea invece un client di tipo **iOS** con ID bundle `io.github.fabrizioriccardo73.flow`. Poi imposta in `local.properties` sia l'ID client sia lo schema iOS che Google mostra, cioè l'ID client rovesciato:
+
+```properties
+youtubeSync.oauthClientId=1234567890-abc.apps.googleusercontent.com
+youtubeSync.oauthRedirectScheme=com.googleusercontent.apps.1234567890-abc
+```
+
 ## Riallinearsi al progetto originale
 
 Remote configurati:
@@ -99,7 +134,7 @@ Per integrare gli aggiornamenti:
 git fetch upstream && git merge upstream/main
 ```
 
-I conflitti attesi sono rari. L'unico punto di contatto con i file originali è la riga `apply(from = "fork.gradle")` in fondo ad `app/build.gradle.kts`, più una riga in cima a `README.md`. Dopo il merge, verifica che la build del fork resti verde.
+I conflitti attesi sono rari. I punti di contatto con i file originali sono la riga `apply(from = "fork.gradle")` in fondo ad `app/build.gradle.kts`, una riga in cima a `README.md` e le righe marcate `// fork` nelle impostazioni. Dopo il merge, verifica che la build del fork resti verde.
 
 ## Trasferire i dati da Flow originale
 

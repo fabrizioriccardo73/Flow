@@ -1,5 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Launcher name of the fork, so it is told apart from the original Flow. -->
-    <string name="app_launcher_name" translatable="false">Flow YT</string>
+    <!-- YouTube Sync (fork): Linked Account, ticket 02 -->
+    <string name="youtube_sync_title">YouTube Sync</string>
+    <string name="youtube_sync_summary">Sync subscriptions and playlists with your YouTube account</string>
+    <string name="youtube_sync_account_section">YouTube account</string>
+    <string name="youtube_sync_link">Link YouTube account</string>
+    <string name="youtube_sync_link_summary">Sign in with Google in your browser</string>
+    <string name="youtube_sync_account">Linked account</string>
+    <string name="youtube_sync_linked_as">%1$s · tap to unlink</string>
+    <string name="youtube_sync_privacy_title">What the account is used for</string>
+    <string name="youtube_sync_privacy_body">Only to sync subscriptions and playlists. Playback and browsing never use it.</string>
+    <string name="youtube_sync_unlink">Unlink</string>
+    <string name="youtube_sync_unlink_title">Unlink YouTube account?</string>
+    <string name="youtube_sync_unlink_body">Your subscriptions and playlists stay in Flow. Nothing changes on YouTube, and Flow\'s access to the account is revoked.</string>
+    <string name="youtube_sync_linked">YouTube account linked</string>
+    <string name="youtube_sync_unlinked">YouTube account unlinked</string>
+    <string name="youtube_sync_link_cancelled">Linking cancelled</string>
+    <string name="youtube_sync_link_offline">Could not reach Google. Try again when online.</string>
+    <string name="youtube_sync_link_failed">Google refused the link. Try again.</string>
+    <string name="youtube_sync_not_configured">This build has no Google OAuth client (see FORK.md)</string>
 </resources>

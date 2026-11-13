@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="youtube_sync_title">YouTube Sync</string>
+    <string name="youtube_sync_summary">Sincronizza iscrizioni e playlist con il tuo account YouTube</string>
+    <string name="youtube_sync_account_section">Account YouTube</string>
+    <string name="youtube_sync_link">Collega account YouTube</string>
+    <string name="youtube_sync_link_summary">Accedi con Google nel browser</string>
+    <string name="youtube_sync_account">Account collegato</string>
+    <string name="youtube_sync_linked_as">%1$s · tocca per scollegare</string>
+    <string name="youtube_sync_privacy_title">A cosa serve l\'account</string>
+    <string name="youtube_sync_privacy_body">Solo a sincronizzare iscrizioni e playlist. Riproduzione e navigazione non lo usano mai.</string>
+    <string name="youtube_sync_unlink">Scollega</string>
+    <string name="youtube_sync_unlink_title">Scollegare l\'account YouTube?</string>
+    <string name="youtube_sync_unlink_body">Iscrizioni e playlist restano in Flow. Su YouTube non cambia nulla e l\'accesso di Flow all\'account viene revocato.</string>
+    <string name="youtube_sync_linked">Account YouTube collegato</string>
+    <string name="youtube_sync_unlinked">Account YouTube scollegato</string>
+    <string name="youtube_sync_link_cancelled">Collegamento annullato</string>
+    <string name="youtube_sync_link_offline">Google non è raggiungibile. Riprova quando sei online.</string>
+    <string name="youtube_sync_link_failed">Google ha rifiutato il collegamento. Riprova.</string>
+    <string name="youtube_sync_not_configured">Questa build non ha un client OAuth Google (vedi FORK.md)</string>
+</resources>

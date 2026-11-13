@@ -40,6 +40,7 @@ import io.github.aedev.flow.ui.screens.settings.topics.TopicPreferencesScreen
 import io.github.aedev.flow.ui.screens.settings.wellbeing.WellbeingScreen
 import io.github.aedev.flow.ui.screens.settings.widgets.WidgetsSettingsScreen
 import io.github.aedev.flow.ui.screens.sync.SyncScreen
+import io.github.aedev.flow.youtubesync.ui.YouTubeSyncScreen // fork
 
 /**
  * The page a [SettingsTarget] opens. [onBack] is null for the root page beside the settings list,
@@ -154,6 +155,11 @@ internal fun SettingsDetail(
 
         SettingsDestination.SCROBBLING -> {
             ScrobblingScreen(onBack = onBack, highlight = target.highlight)
+        }
+
+        // fork: YouTube Sync
+        SettingsDestination.YOUTUBE_SYNC -> {
+            YouTubeSyncScreen(onBack = onBack, highlight = target.highlight)
         }
 
         SettingsDestination.BACKUP -> {

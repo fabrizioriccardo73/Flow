@@ -3,6 +3,7 @@ package io.github.aedev.flow.ui.screens.settings.integrations
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoFixHigh
 import androidx.compose.material.icons.outlined.GraphicEq
+import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material.icons.outlined.ThumbDownOffAlt
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -74,6 +75,14 @@ internal fun IntegrationsScreen(
                 DestinationIndex.entry(SettingsDestination.SCROBBLING),
                 icon = Icons.Outlined.GraphicEq,
                 onClick = { onNavigate(SettingsTarget(SettingsDestination.SCROBBLING)) },
+            )
+        }
+        // fork: YouTube Sync
+        group(key = "integrations.youtube_sync.group", header = R.string.youtube_sync_title) {
+            nav(
+                DestinationIndex.entry(SettingsDestination.YOUTUBE_SYNC),
+                icon = Icons.Outlined.Sync,
+                onClick = { onNavigate(SettingsTarget(SettingsDestination.YOUTUBE_SYNC)) },
             )
         }
         group(key = "integrations.dearrow.group", header = R.string.player_settings_dearrow) {

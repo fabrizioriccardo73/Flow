@@ -1,14 +1,53 @@
 // Fork-specific configuration (fabrizioriccardo73/Flow).
 // Kept in its own file and applied from the last line of app/build.gradle.kts,
-// so the diff against Flow-Tube/Flow stays a single line and upstream merges stay easy.
+// so the diff against Flow-Tube/Flow stays small and upstream merges stay easy.
 // Groovy on purpose: a Kotlin script applied with apply(from = ...) cannot see the
 // Android Gradle Plugin's types. See FORK.md.
 
-android {
-    // Own app id: installs next to the original Flow, and is the id registered for
-    // the fork's Google OAuth client.
-    defaultConfig.applicationId = "io.github.fabrizioriccardo73.flow"
+def localProps = new Properties()
+def localPropsFile = rootProject.file("local.properties")
+if (localPropsFile.exists()) localPropsFile.withInputStream { localProps.load(it) }
 
-    // Fork-only resources (launcher name), layered on the FOSS flavor: the fork ships FOSS only.
-    sourceSets.getByName("foss").res.directories.add("src/fork/res")
+// A value from -P, local.properties or the environment, in that order.
+def forkSetting = { String gradleName, String envName, String fallback ->
+    (project.findProperty(gradleName) ?: localProps.getProperty(gradleName) ?: System.getenv(envName) ?: fallback).toString()
+}
+
+def forkAppId = "io.github.fabrizioriccardo73.flow"
+
+// Google OAuth client of the Linked Account (ticket 02). Not committed: set it in local.properties.
+def oauthClientId = forkSetting("youtubeSync.oauthClientId", "YOUTUBE_SYNC_OAUTH_CLIENT_ID", "")
+// The redirect scheme: the app id for a Google "Android" client with custom URI schemes enabled,
+// or the reversed client id (com.googleusercontent.apps.<id>) for a Google "iOS" client.
+// Unset, it follows each build's app id (debug builds end in ".debug").
+def oauthRedirectScheme = forkSetting("youtubeSync.oauthRedirectScheme", "YOUTUBE_SYNC_OAUTH_REDIRECT_SCHEME", "")
+def redirectSchemeFor = { String appId -> oauthRedirectScheme ?: appId }
+
+android {
+    // Own app id: installs next to the original Flow.
+    defaultConfig.applicationId = forkAppId
+
+    defaultConfig.buildConfigField("String", "YOUTUBE_SYNC_OAUTH_CLIENT_ID", "\"${oauthClientId}\"")
+    defaultConfig.buildConfigField("String", "YOUTUBE_SYNC_OAUTH_REDIRECT_URI", "\"${redirectSchemeFor(forkAppId)}:/oauth2redirect\"")
+    // Read by AppAuth's RedirectUriReceiverActivity.
+    defaultConfig.manifestPlaceholders["appAuthRedirectScheme"] = redirectSchemeFor(forkAppId)
+    buildTypes.getByName("debug") {
+        buildConfigField("String", "YOUTUBE_SYNC_OAUTH_REDIRECT_URI", "\"${redirectSchemeFor(forkAppId + ".debug")}:/oauth2redirect\"")
+        manifestPlaceholders["appAuthRedirectScheme"] = redirectSchemeFor(forkAppId + ".debug")
+    }
+
+    // Fork code, resources and tests live apart from the original sources (src/fork*).
+    sourceSets.getByName("main").java.directories.add("src/fork/java")
+    sourceSets.getByName("main").kotlin.directories.add("src/fork/java")
+    sourceSets.getByName("main").res.directories.add("src/fork/res")
+    sourceSets.getByName("test").java.directories.add("src/forkTest/java")
+    sourceSets.getByName("test").kotlin.directories.add("src/forkTest/java")
+    // The launcher name, on the FOSS flavor only: the fork ships FOSS only.
+    sourceSets.getByName("foss").res.directories.add("src/forkFoss/res")
+}
+
+dependencies {
+    // AppAuth: the OAuth 2.0 / PKCE browser flow for the Linked Account (ADR 0001, ticket 02).
+    // Declared here rather than in the version catalog to keep the fork's diff out of upstream files.
+    implementation "net.openid:appauth:0.11.1"
 }
