@@ -38,4 +38,11 @@
     <!-- YouTube Sync: three-way sync of subscriptions, ticket 04 -->
     <string name="youtube_sync_preview_changes_body">On YouTube: %1$d to subscribe, %2$d to unsubscribe\nIn Flow: %3$d to subscribe, %4$d to unsubscribe</string>
     <string name="youtube_sync_done_changes">Synced. YouTube: +%1$d −%2$d. Flow: +%3$d −%4$d.</string>
+    <!-- YouTube Sync: mass removal guard, ticket 05 -->
+    <string name="youtube_sync_mass_removal_title">Many subscriptions would be removed</string>
+    <string name="youtube_sync_mass_removal_body">%1$d of %2$d subscriptions would be removed %3$s. If you did not remove them yourself, cancel: data may have been lost on the other side.</string>
+    <string name="youtube_sync_mass_removal_more">and %1$d more</string>
+    <string name="youtube_sync_mass_removal_confirm">Remove anyway</string>
+    <string name="youtube_sync_side_flow">in Flow</string>
+    <string name="youtube_sync_side_youtube">on YouTube</string>
 </resources>

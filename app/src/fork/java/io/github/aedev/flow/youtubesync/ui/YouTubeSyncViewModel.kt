@@ -129,7 +129,8 @@ class YouTubeSyncViewModel
             _syncState.value = SyncUiState.Applying
             viewModelScope.launch {
                 try {
-                    _syncMessages.send(SyncMessage.Done(sync.apply(preview.plan)))
+                    // The preview showed the mass-removal warning, so confirming it confirms that too.
+                    _syncMessages.send(SyncMessage.Done(sync.apply(preview.plan, massRemovalConfirmed = true)))
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {

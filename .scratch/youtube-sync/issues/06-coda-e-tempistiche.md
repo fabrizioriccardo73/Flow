@@ -13,4 +13,5 @@
 - [ ] Lettura da YouTube all'apertura dell'app e con un lavoro in background ogni 6 ore che richiede la rete
 - [ ] Il lavoro in background gira solo sui profili con Linked Account
 - [ ] Indicatore discreto con stato e ora dell'ultima YouTube Sync riuscita
+- [ ] Una YouTube Sync in background con rimozioni di massa si sospende (`MassRemovalNotConfirmedException`) e mostra una notifica che apre l'anteprima (dal ticket 05)
 - [ ] La coda è generica, così che il ticket 09 possa accodarvi le operazioni sulle playlist

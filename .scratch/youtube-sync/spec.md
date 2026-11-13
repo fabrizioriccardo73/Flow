@@ -137,7 +137,7 @@ Un fork personale di Flow per Android (basato sulla variante FOSS, con un `appli
 
   Il risultato è un piano di operazioni verso Flow e verso YouTube, calcolato prima di qualsiasi scrittura. Questo permette l'anteprima e il controllo sulle rimozioni di massa.
 - **Primo collegamento** (nessuna Sync Baseline): il piano è un'unione senza rimozioni. Le Owned Playlist e le Saved Playlist arrivano in Flow, mentre le playlist Flow restano Flow-only. Prima di applicarlo viene mostrata un'anteprima con i conteggi e gli avvisi sui titoli uguali.
-- **Protezione dalle rimozioni di massa**: se il piano rimuove più del 10% degli elementi di una collezione, o più di 20 elementi, si chiede conferma all'utente. Se l'utente rifiuta, non si applica nulla e la Sync Baseline resta invariata.
+- **Protezione dalle rimozioni di massa**: se il piano rimuove più di 20 elementi di una collezione, o più del 10% purché siano almeno 3, si chiede conferma all'utente. Se l'utente rifiuta, non si applica nulla e la Sync Baseline resta invariata.
 - **Elementi non rappresentabili**: i video eliminati o privati nelle playlist YouTube restano fuori sia dal confronto sia dalle scritture. Non compaiono mai nel piano.
 - **Sync Baseline**: salvata solo sul YouTube Sync Device, per profilo, separata dai dati sincronizzati con la Device Sync. Viene aggiornata solo dopo che il piano è stato applicato con successo; per gli elementi falliti si aggiorna elemento per elemento, così che si ritentino.
 - **Coda delle modifiche locali**: le modifiche di Flow verso YouTube passano da una coda persistente. Le modifiche consecutive sullo stesso elemento si compattano, per esempio un'iscrizione seguita da una disiscrizione si annulla. La coda sopravvive a riavvii e blocchi dell'app.

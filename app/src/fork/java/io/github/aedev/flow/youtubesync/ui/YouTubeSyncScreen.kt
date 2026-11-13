@@ -3,10 +3,13 @@ package io.github.aedev.flow.youtubesync.ui
 import android.content.Context
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.Sync
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -19,6 +22,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.aedev.flow.R
@@ -26,7 +30,9 @@ import io.github.aedev.flow.ui.components.settings.SettingsPage
 import io.github.aedev.flow.ui.components.settings.info
 import io.github.aedev.flow.ui.components.settings.nav
 import io.github.aedev.flow.ui.components.shared.FlowAlertDialog
+import io.github.aedev.flow.youtubesync.engine.MassRemoval
 import io.github.aedev.flow.youtubesync.engine.SyncPlan
+import io.github.aedev.flow.youtubesync.engine.SyncSide
 import io.github.aedev.flow.youtubesync.remote.YouTubeAccountException
 
 /** The YouTube Sync page: link or unlink the profile's Linked Account (ticket 02). */
@@ -151,35 +157,81 @@ private fun SyncPreviewDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val warning = plan.massRemovals.isNotEmpty()
     FlowAlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(stringResource(if (plan.isFirstLink) R.string.youtube_sync_preview_first_title else R.string.youtube_sync_preview_title))
-        },
-        text = {
             Text(
-                if (plan.isFirstLink) {
-                    stringResource(
-                        R.string.youtube_sync_preview_body,
-                        plan.addToYouTube.size,
-                        plan.addToFlow.size,
-                        plan.alreadyOnBoth.size,
-                    )
-                } else {
-                    stringResource(
-                        R.string.youtube_sync_preview_changes_body,
-                        plan.addToYouTube.size,
-                        plan.removeFromYouTube.size,
-                        plan.addToFlow.size,
-                        plan.removeFromFlow.size,
-                    )
-                },
+                stringResource(
+                    when {
+                        warning -> R.string.youtube_sync_mass_removal_title
+                        plan.isFirstLink -> R.string.youtube_sync_preview_first_title
+                        else -> R.string.youtube_sync_preview_title
+                    },
+                ),
             )
         },
-        confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(R.string.youtube_sync_preview_confirm)) } },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (warning) {
+                    plan.massRemovals.forEach { removal -> MassRemovalWarning(removal) }
+                }
+                Text(
+                    if (plan.isFirstLink) {
+                        stringResource(
+                            R.string.youtube_sync_preview_body,
+                            plan.addToYouTube.size,
+                            plan.addToFlow.size,
+                            plan.alreadyOnBoth.size,
+                        )
+                    } else {
+                        stringResource(
+                            R.string.youtube_sync_preview_changes_body,
+                            plan.addToYouTube.size,
+                            plan.removeFromYouTube.size,
+                            plan.addToFlow.size,
+                            plan.removeFromFlow.size,
+                        )
+                    },
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                if (warning) {
+                    Text(stringResource(R.string.youtube_sync_mass_removal_confirm), color = MaterialTheme.colorScheme.error)
+                } else {
+                    Text(stringResource(R.string.youtube_sync_preview_confirm))
+                }
+            }
+        },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_cancel)) } },
     )
 }
+
+/** Which side loses how many items, with the first few names, so a lost-data accident is recognisable. */
+@Composable
+private fun MassRemovalWarning(removal: MassRemoval) {
+    val side =
+        stringResource(
+            when (removal.side) {
+                SyncSide.FLOW -> R.string.youtube_sync_side_flow
+                SyncSide.YOUTUBE -> R.string.youtube_sync_side_youtube
+            },
+        )
+    val shown = removal.items.take(MAX_NAMES_SHOWN)
+    val more = removal.count - shown.size
+    Text(
+        stringResource(R.string.youtube_sync_mass_removal_body, removal.count, removal.total, side),
+        color = MaterialTheme.colorScheme.error,
+    )
+    Text(
+        shown.joinToString(", ") + if (more > 0) " " + stringResource(R.string.youtube_sync_mass_removal_more, more) else "",
+        style = MaterialTheme.typography.bodySmall,
+    )
+}
+
+private const val MAX_NAMES_SHOWN = 8
 
 private fun syncMessageText(
     context: Context,

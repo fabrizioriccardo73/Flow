@@ -28,6 +28,8 @@ data class SyncPlan(
     val removeFromFlow: List<LocalSubscription> = emptyList(),
     /** Channels unsubscribed in Flow since the last YouTube Sync, to remove from YouTube. */
     val removeFromYouTube: List<RemoteSubscription> = emptyList(),
+    /** Removals too large to apply without confirmation (see [RemovalGuard]); empty when none. */
+    val massRemovals: List<MassRemoval> = emptyList(),
 ) {
     val isEmpty: Boolean
         get() = addToFlow.isEmpty() && addToYouTube.isEmpty() && removeFromFlow.isEmpty() && removeFromYouTube.isEmpty()
@@ -81,13 +83,25 @@ class YouTubeSync
             }
             // A channel on one side only was either added there (not in the baseline) or removed from
             // the other side (in the baseline): carry that change across.
+            val removeFromFlow = onlyInFlow.filter { it.channelId in baseline }
+            val removeFromYouTube = onlyOnYouTube.filter { it.channelId in baseline }
             return SyncPlan(
                 isFirstLink = false,
                 addToFlow = onlyOnYouTube.filter { it.channelId !in baseline },
                 addToYouTube = onlyInFlow.filter { it.channelId !in baseline },
                 alreadyOnBoth = flow.keys intersect youTube.keys,
-                removeFromFlow = onlyInFlow.filter { it.channelId in baseline },
-                removeFromYouTube = onlyOnYouTube.filter { it.channelId in baseline },
+                removeFromFlow = removeFromFlow,
+                removeFromYouTube = removeFromYouTube,
+                massRemovals =
+                    listOfNotNull(
+                        RemovalGuard.check(SyncCollection.SUBSCRIPTIONS, SyncSide.FLOW, removeFromFlow.map { it.title }, flow.size),
+                        RemovalGuard.check(
+                            SyncCollection.SUBSCRIPTIONS,
+                            SyncSide.YOUTUBE,
+                            removeFromYouTube.map { it.title },
+                            youTube.size,
+                        ),
+                    ),
             )
         }
 
@@ -96,8 +110,15 @@ class YouTubeSync
          * The new baseline is what both sides now agree on, so anything that failed is planned again
          * next time: a failed add stays out of it, a failed removal stays in it. Quota, authorization
          * and network errors stop the run; a channel YouTube refuses is skipped.
+         *
+         * A plan with [SyncPlan.massRemovals] is refused with [MassRemovalNotConfirmedException], writing
+         * nothing, unless [massRemovalConfirmed]: no caller, background ones included, can skip the guard.
          */
-        suspend fun apply(plan: SyncPlan): SyncResult {
+        suspend fun apply(
+            plan: SyncPlan,
+            massRemovalConfirmed: Boolean = false,
+        ): SyncResult {
+            if (plan.massRemovals.isNotEmpty() && !massRemovalConfirmed) throw MassRemovalNotConfirmedException(plan.massRemovals)
             val agreed = plan.alreadyOnBoth.toMutableSet()
 
             if (plan.addToFlow.isNotEmpty()) {

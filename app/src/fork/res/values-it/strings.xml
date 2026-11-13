@@ -35,4 +35,10 @@
     <string name="youtube_sync_error_generic">YouTube Sync non riuscita. Riprova.</string>
     <string name="youtube_sync_preview_changes_body">Su YouTube: %1$d iscrizioni da aggiungere, %2$d da rimuovere\nIn Flow: %3$d iscrizioni da aggiungere, %4$d da rimuovere</string>
     <string name="youtube_sync_done_changes">Sincronizzato. YouTube: +%1$d −%2$d. Flow: +%3$d −%4$d.</string>
+    <string name="youtube_sync_mass_removal_title">Verrebbero rimosse molte iscrizioni</string>
+    <string name="youtube_sync_mass_removal_body">Verrebbero rimosse %1$d iscrizioni su %2$d %3$s. Se non le hai rimosse tu, annulla: potrebbero essersi persi dei dati dall\'altra parte.</string>
+    <string name="youtube_sync_mass_removal_more">e altre %1$d</string>
+    <string name="youtube_sync_mass_removal_confirm">Rimuovi comunque</string>
+    <string name="youtube_sync_side_flow">in Flow</string>
+    <string name="youtube_sync_side_youtube">su YouTube</string>
 </resources>
