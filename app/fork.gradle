@@ -1,0 +1,14 @@
+// Fork-specific configuration (fabrizioriccardo73/Flow).
+// Kept in its own file and applied from the last line of app/build.gradle.kts,
+// so the diff against Flow-Tube/Flow stays a single line and upstream merges stay easy.
+// Groovy on purpose: a Kotlin script applied with apply(from = ...) cannot see the
+// Android Gradle Plugin's types. See FORK.md.
+
+android {
+    // Own app id: installs next to the original Flow, and is the id registered for
+    // the fork's Google OAuth client.
+    defaultConfig.applicationId = "io.github.fabrizioriccardo73.flow"
+
+    // Fork-only resources (launcher name), layered on the FOSS flavor: the fork ships FOSS only.
+    sourceSets.getByName("foss").res.directories.add("src/fork/res")
+}

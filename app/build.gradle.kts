@@ -456,3 +456,6 @@ ksp {
 hilt {
     enableAggregatingTask = true
 }
+
+// Fork-specific overrides (see FORK.md). Keep this the only change to this file.
+apply(from = "fork.gradle")
