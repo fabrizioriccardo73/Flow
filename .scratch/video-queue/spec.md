@@ -55,7 +55,7 @@ Una **Coda** video separata da ciò che sto riproducendo, persistente e richiama
 
 17. Come utente, voglio aprire la Coda da un'icona con il numero di video nella barra in alto delle schermate principali, anche quando non sta suonando niente.
 18. Come utente, voglio aprire la Coda anche dal mini player e dal dock del player.
-19. Come utente, voglio vedere nello sheet la Coda in alto e sotto "Dopo, da: ‹Contesto›" con i prossimi video della playlist o dell'Autoplay, così da capire cosa verrà riprodotto e in che ordine.
+19. Come utente, voglio vedere nello sheet, dall'alto in basso nell'ordine in cui verranno riprodotti, "Dopo, da: ‹Contesto›" con la playlist in corso e poi la Coda, così da capire cosa verrà riprodotto e in che ordine.
 20. Come utente, voglio riordinare la Coda trascinando i video.
 21. Come utente, voglio rimuovere un video con uno swipe e poterlo annullare.
 22. Come utente, voglio svuotare la Coda con un'azione sola e poterlo annullare.
@@ -83,7 +83,7 @@ Una **Coda** video separata da ciò che sto riproducendo, persistente e richiama
 - **Duplicati**: la Coda è un insieme ordinato per ID video.
 - **Riproduzione su un altro dispositivo**: con un `PlaybackTarget` remoto attivo le azioni restano instradate verso il dispositivo remoto come oggi, e la Coda locale non cambia.
 - **Shorts e musica**: le azioni di Coda non compaiono sugli Shorts. La coda musicale (`QueuePersistence`) non si tocca.
-- **Interfaccia**: lo sheet della Coda sostituisce l'attuale `FlowPlaylistQueueBottomSheet` per i video e si apre da tre punti: dock del player, mini player e un'icona con badge nella barra in alto delle schermate principali. Il dock appare anche con un solo video in Coda.
+- **Interfaccia**: lo sheet della Coda sostituisce l'attuale `FlowPlaylistQueueBottomSheet` per i video e mostra le sezioni nell'ordine reale: prima il Contesto, con i controlli di oggi (riordino, rimozione, shuffle, loop), poi la Coda. Si apre da tre punti: dock del player, mini player e un'icona con badge nella barra in alto delle schermate principali. Il dock appare anche con un solo video in Coda.
 - **Fuori dal primo giro**: l'interfaccia TV (`ui/tv`).
 
 ## Testing Decisions
