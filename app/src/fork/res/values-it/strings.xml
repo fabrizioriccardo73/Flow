@@ -18,4 +18,20 @@
     <string name="youtube_sync_link_offline">Google non è raggiungibile. Riprova quando sei online.</string>
     <string name="youtube_sync_link_failed">Google ha rifiutato il collegamento. Riprova.</string>
     <string name="youtube_sync_not_configured">Questa build non ha un client OAuth Google (vedi FORK.md)</string>
+    <string name="youtube_sync_sync_section">Sincronizzazione</string>
+    <string name="youtube_sync_now">Sincronizza ora</string>
+    <string name="youtube_sync_now_summary">Iscrizioni tra Flow e YouTube</string>
+    <string name="youtube_sync_reading">Lettura delle iscrizioni…</string>
+    <string name="youtube_sync_applying">Sincronizzazione…</string>
+    <string name="youtube_sync_preview_first_title">Prima sincronizzazione</string>
+    <string name="youtube_sync_preview_title">Sincronizzare le iscrizioni?</string>
+    <string name="youtube_sync_preview_body">Iscrizioni da aggiungere su YouTube: %1$d\nIscrizioni da aggiungere in Flow: %2$d\nGià presenti su entrambi: %3$d\n\nNon viene rimosso nulla da nessuna parte.</string>
+    <string name="youtube_sync_preview_confirm">Sincronizza</string>
+    <string name="youtube_sync_nothing_to_do">Flow e YouTube hanno già le stesse iscrizioni</string>
+    <string name="youtube_sync_done">Sincronizzato: %1$d aggiunte su YouTube, %2$d aggiunte in Flow.</string>
+    <string name="youtube_sync_rejected">YouTube ha rifiutato %1$d canali; verranno ritentati.</string>
+    <string name="youtube_sync_error_quota">La quota giornaliera di YouTube è esaurita. Riprova domani.</string>
+    <string name="youtube_sync_error_auth">L\'account YouTube va ricollegato.</string>
+    <string name="youtube_sync_error_offline">YouTube non è raggiungibile. Riprova quando sei online.</string>
+    <string name="youtube_sync_error_generic">YouTube Sync non riuscita. Riprova.</string>
 </resources>

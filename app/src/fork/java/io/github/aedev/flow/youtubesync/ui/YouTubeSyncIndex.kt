@@ -17,6 +17,15 @@ object YouTubeSyncIndex {
             destination = page,
         )
 
+    val syncNow =
+        SettingEntry(
+            key = "youtube_sync.sync_now",
+            title = R.string.youtube_sync_now,
+            summary = R.string.youtube_sync_now_summary,
+            section = R.string.youtube_sync_sync_section,
+            destination = page,
+        )
+
     val account =
         SettingEntry(
             key = "youtube_sync.account",
