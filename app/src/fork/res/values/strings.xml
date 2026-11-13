@@ -30,10 +30,12 @@
     <string name="youtube_sync_preview_body">Subscriptions to add on YouTube: %1$d\nSubscriptions to add in Flow: %2$d\nAlready on both: %3$d\n\nNothing is removed on either side.</string>
     <string name="youtube_sync_preview_confirm">Sync</string>
     <string name="youtube_sync_nothing_to_do">Flow and YouTube already have the same subscriptions</string>
-    <string name="youtube_sync_done">Synced: %1$d added on YouTube, %2$d added in Flow.</string>
     <string name="youtube_sync_rejected">YouTube refused %1$d channels; they will be retried.</string>
     <string name="youtube_sync_error_quota">YouTube\'s daily quota is used up. Try again tomorrow.</string>
     <string name="youtube_sync_error_auth">The YouTube account must be linked again.</string>
     <string name="youtube_sync_error_offline">Could not reach YouTube. Try again when online.</string>
     <string name="youtube_sync_error_generic">YouTube Sync failed. Try again.</string>
+    <!-- YouTube Sync: three-way sync of subscriptions, ticket 04 -->
+    <string name="youtube_sync_preview_changes_body">On YouTube: %1$d to subscribe, %2$d to unsubscribe\nIn Flow: %3$d to subscribe, %4$d to unsubscribe</string>
+    <string name="youtube_sync_done_changes">Synced. YouTube: +%1$d −%2$d. Flow: +%3$d −%4$d.</string>
 </resources>

@@ -158,12 +158,22 @@ private fun SyncPreviewDialog(
         },
         text = {
             Text(
-                stringResource(
-                    R.string.youtube_sync_preview_body,
-                    plan.addToYouTube.size,
-                    plan.addToFlow.size,
-                    plan.alreadyOnBoth.size,
-                ),
+                if (plan.isFirstLink) {
+                    stringResource(
+                        R.string.youtube_sync_preview_body,
+                        plan.addToYouTube.size,
+                        plan.addToFlow.size,
+                        plan.alreadyOnBoth.size,
+                    )
+                } else {
+                    stringResource(
+                        R.string.youtube_sync_preview_changes_body,
+                        plan.addToYouTube.size,
+                        plan.removeFromYouTube.size,
+                        plan.addToFlow.size,
+                        plan.removeFromFlow.size,
+                    )
+                },
             )
         },
         confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(R.string.youtube_sync_preview_confirm)) } },
@@ -182,7 +192,14 @@ private fun syncMessageText(
 
         is SyncMessage.Done -> {
             val result = message.result
-            val base = context.getString(R.string.youtube_sync_done, result.addedToYouTube, result.addedToFlow)
+            val base =
+                context.getString(
+                    R.string.youtube_sync_done_changes,
+                    result.addedToYouTube,
+                    result.removedFromYouTube,
+                    result.addedToFlow,
+                    result.removedFromFlow,
+                )
             when {
                 result.stoppedBy != null -> base + " " + errorText(context, result.stoppedBy)
                 result.rejected.isNotEmpty() -> base + " " + context.getString(R.string.youtube_sync_rejected, result.rejected.size)

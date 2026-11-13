@@ -28,10 +28,11 @@
     <string name="youtube_sync_preview_body">Iscrizioni da aggiungere su YouTube: %1$d\nIscrizioni da aggiungere in Flow: %2$d\nGià presenti su entrambi: %3$d\n\nNon viene rimosso nulla da nessuna parte.</string>
     <string name="youtube_sync_preview_confirm">Sincronizza</string>
     <string name="youtube_sync_nothing_to_do">Flow e YouTube hanno già le stesse iscrizioni</string>
-    <string name="youtube_sync_done">Sincronizzato: %1$d aggiunte su YouTube, %2$d aggiunte in Flow.</string>
     <string name="youtube_sync_rejected">YouTube ha rifiutato %1$d canali; verranno ritentati.</string>
     <string name="youtube_sync_error_quota">La quota giornaliera di YouTube è esaurita. Riprova domani.</string>
     <string name="youtube_sync_error_auth">L\'account YouTube va ricollegato.</string>
     <string name="youtube_sync_error_offline">YouTube non è raggiungibile. Riprova quando sei online.</string>
     <string name="youtube_sync_error_generic">YouTube Sync non riuscita. Riprova.</string>
+    <string name="youtube_sync_preview_changes_body">Su YouTube: %1$d iscrizioni da aggiungere, %2$d da rimuovere\nIn Flow: %3$d iscrizioni da aggiungere, %4$d da rimuovere</string>
+    <string name="youtube_sync_done_changes">Sincronizzato. YouTube: +%1$d −%2$d. Flow: +%3$d −%4$d.</string>
 </resources>

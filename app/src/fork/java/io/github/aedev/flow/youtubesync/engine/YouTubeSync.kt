@@ -10,7 +10,11 @@ import javax.inject.Singleton
 
 /**
  * What a YouTube Sync is about to do, computed before any write so it can be shown and confirmed.
- * Ticket 03 (first link): a union, so nothing is ever removed on either side.
+ *
+ * On the first link (no Sync Baseline) it is a union and removes nothing. Afterwards it is a three-way
+ * comparison of Flow, YouTube and the Sync Baseline: a change made on one side only is carried to the
+ * other. For subscriptions there are no real conflicts: a channel added on both sides is one channel,
+ * and a channel removed on one side and left alone on the other is removed.
  */
 data class SyncPlan(
     val isFirstLink: Boolean,
@@ -20,8 +24,13 @@ data class SyncPlan(
     val addToYouTube: List<LocalSubscription>,
     /** Channels already on both sides. */
     val alreadyOnBoth: Set<String>,
+    /** Channels unsubscribed on YouTube since the last YouTube Sync, to remove from Flow. */
+    val removeFromFlow: List<LocalSubscription> = emptyList(),
+    /** Channels unsubscribed in Flow since the last YouTube Sync, to remove from YouTube. */
+    val removeFromYouTube: List<RemoteSubscription> = emptyList(),
 ) {
-    val isEmpty: Boolean get() = addToFlow.isEmpty() && addToYouTube.isEmpty()
+    val isEmpty: Boolean
+        get() = addToFlow.isEmpty() && addToYouTube.isEmpty() && removeFromFlow.isEmpty() && removeFromYouTube.isEmpty()
 }
 
 /** How applying a [SyncPlan] went. */
@@ -32,6 +41,8 @@ data class SyncResult(
     val rejected: List<String>,
     /** Why the run stopped early, if it did (quota, authorization, network); null when it completed. */
     val stoppedBy: YouTubeAccountException?,
+    val removedFromFlow: Int = 0,
+    val removedFromYouTube: Int = 0,
 )
 
 /**
@@ -55,22 +66,36 @@ class YouTubeSync
 
         /** Reads both sides and plans the run. Writes nothing. */
         suspend fun plan(): SyncPlan {
-            val baseline = baselines.read()
+            val baseline = baselines.read()?.subscriptions
             val flow = local.all().associateBy { it.channelId }
             val youTube = remote.subscriptions().associateBy { it.channelId }
+            val onlyInFlow = flow.values.filter { it.channelId !in youTube }
+            val onlyOnYouTube = youTube.values.filter { it.channelId !in flow }
+            if (baseline == null) {
+                return SyncPlan(
+                    isFirstLink = true,
+                    addToFlow = onlyOnYouTube,
+                    addToYouTube = onlyInFlow,
+                    alreadyOnBoth = flow.keys intersect youTube.keys,
+                )
+            }
+            // A channel on one side only was either added there (not in the baseline) or removed from
+            // the other side (in the baseline): carry that change across.
             return SyncPlan(
-                isFirstLink = baseline == null,
-                addToFlow = youTube.values.filter { it.channelId !in flow },
-                addToYouTube = flow.values.filter { it.channelId !in youTube },
+                isFirstLink = false,
+                addToFlow = onlyOnYouTube.filter { it.channelId !in baseline },
+                addToYouTube = onlyInFlow.filter { it.channelId !in baseline },
                 alreadyOnBoth = flow.keys intersect youTube.keys,
+                removeFromFlow = onlyInFlow.filter { it.channelId in baseline },
+                removeFromYouTube = onlyOnYouTube.filter { it.channelId in baseline },
             )
         }
 
         /**
-         * Applies [plan]: Flow first (local, cannot fail on quota), then YouTube one channel at a time.
-         * The baseline records only channels that ended up on both sides, so anything that failed is
-         * planned again next time. Quota, authorization and network errors stop the run; a channel
-         * YouTube refuses is skipped.
+         * Applies [plan]: Flow first (local, cannot run out of quota), then YouTube one channel at a time.
+         * The new baseline is what both sides now agree on, so anything that failed is planned again
+         * next time: a failed add stays out of it, a failed removal stays in it. Quota, authorization
+         * and network errors stop the run; a channel YouTube refuses is skipped.
          */
         suspend fun apply(plan: SyncPlan): SyncResult {
             val agreed = plan.alreadyOnBoth.toMutableSet()
@@ -79,10 +104,17 @@ class YouTubeSync
                 local.add(plan.addToFlow.map { LocalSubscription(it.channelId, it.title, it.thumbnailUrl) })
                 plan.addToFlow.mapTo(agreed) { it.channelId }
             }
+            if (plan.removeFromFlow.isNotEmpty()) {
+                local.remove(plan.removeFromFlow.map { it.channelId })
+            }
 
             var added = 0
+            var removed = 0
             val rejected = mutableListOf<String>()
             var stoppedBy: YouTubeAccountException? = null
+            // Removals not (yet) done on YouTube: still in the baseline, so they are retried.
+            val pendingRemovals = plan.removeFromYouTube.mapTo(mutableSetOf()) { it.channelId }
+
             for (subscription in plan.addToYouTube) {
                 try {
                     remote.subscribe(subscription.channelId)
@@ -95,9 +127,29 @@ class YouTubeSync
                     break
                 }
             }
+            if (stoppedBy == null) {
+                for (subscription in plan.removeFromYouTube) {
+                    try {
+                        remote.unsubscribe(subscription.subscriptionId)
+                        pendingRemovals -= subscription.channelId
+                        removed++
+                    } catch (e: YouTubeAccountException.ItemRejected) {
+                        rejected += subscription.channelId
+                    } catch (e: YouTubeAccountException) {
+                        stoppedBy = e
+                        break
+                    }
+                }
+            }
 
-            val previous = baselines.read() ?: SyncBaseline()
-            baselines.write(previous.copy(subscriptions = previous.subscriptions + agreed))
-            return SyncResult(plan.addToFlow.size, added, rejected, stoppedBy)
+            baselines.write(SyncBaseline(subscriptions = agreed + pendingRemovals))
+            return SyncResult(
+                addedToFlow = plan.addToFlow.size,
+                addedToYouTube = added,
+                rejected = rejected,
+                stoppedBy = stoppedBy,
+                removedFromFlow = plan.removeFromFlow.size,
+                removedFromYouTube = removed,
+            )
         }
     }
