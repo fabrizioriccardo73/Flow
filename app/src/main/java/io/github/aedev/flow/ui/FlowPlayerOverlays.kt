@@ -20,10 +20,12 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel // fork: Coda
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavHostController
 import io.github.aedev.flow.R
+import io.github.aedev.flow.coda.ui.CodaViewModel // fork: Coda
 import io.github.aedev.flow.data.audio.eq.EqState
 import io.github.aedev.flow.data.local.MiniBarSwipeAction
 import io.github.aedev.flow.data.local.PlayerPreferences
@@ -229,6 +231,8 @@ internal fun FlowPlayerOverlays(
     val quickActions = sharedQuickActionsViewModel()
     val removedFromQueue = stringResource(R.string.removed_from_queue)
     val scope = rememberCoroutineScope()
+    val codaViewModel: CodaViewModel = hiltViewModel(context as ComponentActivity) // fork: Coda, the shell's instance
+    val codaSheetOpen by codaViewModel.sheetOpen.collectAsStateWithLifecycle() // fork: Coda
     val closeVideo: () -> Unit = {
         playerVisible = false
         playerViewModel.clearVideo()
@@ -319,14 +323,22 @@ internal fun FlowPlayerOverlays(
                 restingBottomPx = { bottomInsets.miniPlayerBaselinePx(density) },
             )
         }
-        if (showVideoBar && showBarQueue) {
+        // fork: Coda. The top bar opens the same sheet, with or without a video playing.
+        if ((showVideoBar && showBarQueue) || codaSheetOpen) {
             // The service layer keeps a background video audio-only when the queue moves on.
             PlayerQueueSheetHost(
                 asSidePanel = false,
                 expandedHeight = null,
-                onDismiss = { showBarQueue = false },
+                onDismiss = {
+                    showBarQueue = false
+                    codaViewModel.closeSheet()
+                },
                 loadStreamsInPlayer = true,
-                footer = { BackgroundQueueTransport(videoBarActions) },
+                footer = if (showVideoBar) ({ BackgroundQueueTransport(videoBarActions) }) else null,
+                onStartCoda = { video ->
+                    codaViewModel.closeSheet()
+                    playerViewModel.playVideo(video)
+                },
             )
         }
         LaunchedEffect(showVideoBar) { if (!showVideoBar) showBarQueue = false }
@@ -351,7 +363,7 @@ internal fun FlowPlayerOverlays(
         }
 
         MusicMenuSheets(musicMenus)
-        QuickActionsHost(snackbarHostState)
+        QuickActionsHost(snackbarHostState, onPlay = { playerViewModel.playVideo(it) }) // fork: Coda
     }
 }
 

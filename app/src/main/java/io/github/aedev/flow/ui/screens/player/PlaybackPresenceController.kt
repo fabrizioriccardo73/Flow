@@ -102,6 +102,7 @@ internal class PlaybackPresenceController(
 
     fun dismissContinueWatching() {
         val videoId = uiState.value.cachedVideo?.id ?: return
+        playerManager.videoCoda?.finish(videoId) // fork: Coda, a watched video is done with
         scope.launch {
             viewHistory.markAsWatched(videoId)
         }

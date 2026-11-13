@@ -124,7 +124,7 @@ internal fun VideoStageControls(
             isLooping = playerState.isLooping,
             hasPrevious = playerState.hasPrevious || canGoPrevious,
             hasNext = playerState.hasNext || playerUiState.relatedVideos.isNotEmpty(),
-            hasQueue = hasVisibleQueue(playerState.queueTitle, playerState.queueSize),
+            hasQueue = hasVisibleQueue(playerState.queueTitle, playerState.queueSize, playerState.codaSize), // fork: Coda
             sbSubmitEnabled = prefs.sbSubmitEnabled,
             isSponsorBlockAvailable = prefs.sponsorBlockEnabled && sponsorSegments.any { it.endTime > it.startTime },
             isSponsorBlockOffForVideo = sponsorBlockOffForVideo,

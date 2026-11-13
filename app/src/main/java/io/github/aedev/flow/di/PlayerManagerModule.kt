@@ -5,6 +5,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import io.github.aedev.flow.coda.VideoCoda // fork: Coda
 import io.github.aedev.flow.data.localmedia.LocalMediaIds
 import io.github.aedev.flow.data.localmedia.LocalSubtitles
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
@@ -42,6 +43,7 @@ object PlayerManagerModule {
         neuroEngine: Lazy<FlowNeuroEngine>,
         localSubtitles: Lazy<LocalSubtitles>,
         offlineSubtitleStore: Lazy<OfflineSubtitleStore>,
+        videoCoda: VideoCoda, // fork: Coda
     ): EnhancedPlayerManager =
         EnhancedPlayerManager.getInstance().also {
             it.localCopySource =
@@ -56,6 +58,7 @@ object PlayerManagerModule {
                     LocalCaptions(own + subtitles.picked(videoId), subtitles.offsetMs(videoId))
                 }
             it.feedExclusionsSource = FeedExclusionsSource { neuroEngine.get().feedExclusions() }
+            it.videoCoda = videoCoda // fork: Coda
         }
 
     @Provides

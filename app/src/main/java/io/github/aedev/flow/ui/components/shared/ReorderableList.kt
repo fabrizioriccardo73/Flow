@@ -74,6 +74,7 @@ class ReorderableLazyListState internal constructor(
     private val itemIndexOffset: Int,
     private val onMove: (Int, Int) -> Unit,
     private val onDragStopped: () -> Unit,
+    private val canMoveTo: (Int) -> Boolean = { true }, // fork: Coda, keeps a drag inside its section
 ) {
     var draggingIndex by mutableIntStateOf(-1)
         private set
@@ -120,7 +121,7 @@ class ReorderableLazyListState internal constructor(
                 translation < 0f -> draggingIndex - 1
                 else -> return
             }
-        if (neighborLocalIndex < 0) return
+        if (neighborLocalIndex < 0 || !canMoveTo(neighborLocalIndex)) return // fork: Coda
         val neighborItem = visibleItems.firstOrNull { it.index == neighborLocalIndex + itemIndexOffset } ?: return
         val neighborMidpoint = neighborItem.offset + neighborItem.size / 2f
 
@@ -220,11 +221,13 @@ fun rememberReorderableLazyListState(
     itemIndexOffset: Int = 0,
     onMove: (Int, Int) -> Unit,
     onDragStopped: () -> Unit,
+    canMoveTo: (Int) -> Boolean = { true }, // fork: Coda
 ): ReorderableLazyListState {
     val haptic = LocalHapticFeedback.current
     val edgeThresholdPx = with(LocalDensity.current) { 80.dp.toPx() }
     val onMoveState = rememberUpdatedState(onMove)
     val onDragStoppedState = rememberUpdatedState(onDragStopped)
+    val canMoveToState = rememberUpdatedState(canMoveTo) // fork: Coda
 
     val state =
         remember(listState, itemIndexOffset) {
@@ -234,6 +237,7 @@ fun rememberReorderableLazyListState(
                 itemIndexOffset = itemIndexOffset,
                 onMove = { from, to -> onMoveState.value(from, to) },
                 onDragStopped = { onDragStoppedState.value() },
+                canMoveTo = { index -> canMoveToState.value(index) }, // fork: Coda
             )
         }
 

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.aedev.flow.R
+import io.github.aedev.flow.coda.VideoCoda // fork: Coda
 import io.github.aedev.flow.data.engagement.LikedMediaUseCase
 import io.github.aedev.flow.data.engagement.VideoEngagementUseCase
 import io.github.aedev.flow.data.engagement.VideoFeedbackUseCase
@@ -19,6 +20,8 @@ import io.github.aedev.flow.data.video.VideoDownloadOptions
 import io.github.aedev.flow.data.video.VideoDownloadOptionsLoader
 import io.github.aedev.flow.player.EnhancedMusicPlayerManager
 import io.github.aedev.flow.player.EnhancedPlayerManager
+import io.github.aedev.flow.player.GlobalPlayerState // fork: Coda
+import io.github.aedev.flow.player.PlaybackTarget // fork: Coda
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -63,6 +66,7 @@ class QuickActionsViewModel
         private val playerManager: Provider<EnhancedPlayerManager>,
         private val musicVideos: MusicVideoVersions,
         private val autoDownload: AutoDownloadTrigger,
+        private val coda: VideoCoda, // fork: Coda
     ) : ViewModel() {
         val watchLaterIds: StateFlow<Set<String>> =
             playlistRepository
@@ -197,6 +201,7 @@ class QuickActionsViewModel
             viewModelScope.launch {
                 runAction {
                     feedback.markWatched(video)
+                    coda.finish(video.id) // fork: Coda, a watched video is done with
                     emit(R.string.mark_as_watched_toast)
                 }
             }
@@ -220,10 +225,41 @@ class QuickActionsViewModel
             }
         }
 
+        // fork: Coda. With nothing playing a video only joins the Coda, and the snackbar offers to start it.
         fun playVideoNext(video: Video) {
+            if (video.isShort) return
+            val idle = PlaybackTarget.current == null && GlobalPlayerState.currentVideo.value == null
             playerManager.get().addVideoToQueueNext(video)
-            emit(R.string.play_next_toast)
+            if (idle) announceCodaAddition() else emit(R.string.play_next_toast)
         }
+
+        private fun announceCodaAddition() {
+            val first =
+                coda.state.value.videos
+                    .firstOrNull()
+            _messages.tryEmit(QuickActionMessage(R.string.coda_added_toast, play = first))
+        }
+
+        val codaIds: StateFlow<Set<String>> =
+            coda.state
+                .map { current -> current.videos.mapTo(mutableSetOf(), Video::id) }
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(SHARING_TIMEOUT_MS), emptySet())
+
+        fun removeFromCoda(video: Video) {
+            val removed = coda.remove(video.id) ?: return
+            emit(R.string.removed_from_queue, undo = QuickActionUndo.CodaRemoval(removed))
+        }
+
+        fun clearCoda() {
+            val before = coda.clear() ?: return
+            emit(R.string.coda_cleared_toast, undo = QuickActionUndo.CodaCleared(before))
+        }
+
+        fun moveInCoda(
+            from: Int,
+            to: Int,
+        ) = coda.move(from, to)
+        // fork: end
 
         /**
          * [video], known only by its id as a shared link brings it, filled in from the watch response.
@@ -231,10 +267,19 @@ class QuickActionsViewModel
          */
         suspend fun loadLinkedVideo(video: Video): Video? = repository.enrichFromWatchMetadata(video)
 
+        // fork: Coda
         fun addVideoToQueue(video: Video) {
+            if (video.isShort) return
+            if (PlaybackTarget.current != null) {
+                playerManager.get().addVideoToQueue(video)
+                emit(R.string.added_to_queue_toast)
+                return
+            }
+            if (video.id in coda) return emit(R.string.coda_already_queued_toast)
             playerManager.get().addVideoToQueue(video)
-            emit(R.string.added_to_queue_toast)
+            if (GlobalPlayerState.currentVideo.value == null) announceCodaAddition() else emit(R.string.coda_added_toast)
         }
+        // fork: end
 
         /** A video shared to Download with Flow: its title and channel first, which name the file. */
         fun requestLinkedDownload(video: Video) {
@@ -304,6 +349,15 @@ class QuickActionsViewModel
 
                         is QuickActionUndo.MusicQueueRemoval -> {
                             EnhancedMusicPlayerManager.restoreToQueue(undo.removed)
+                        }
+
+                        // fork: Coda
+                        is QuickActionUndo.CodaRemoval -> {
+                            coda.restore(undo.removed)
+                        }
+
+                        is QuickActionUndo.CodaCleared -> {
+                            coda.restoreAll(undo.before)
                         }
 
                         is QuickActionUndo.AutoDownload -> {

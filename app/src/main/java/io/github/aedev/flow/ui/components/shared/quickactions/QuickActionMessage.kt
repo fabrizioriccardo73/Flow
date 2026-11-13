@@ -1,6 +1,8 @@
 package io.github.aedev.flow.ui.components.shared.quickactions
 
 import androidx.annotation.StringRes
+import io.github.aedev.flow.coda.Coda // fork: Coda
+import io.github.aedev.flow.coda.RemovedFromCoda // fork: Coda
 import io.github.aedev.flow.data.local.LikedVideoInfo
 import io.github.aedev.flow.data.local.entity.PlaylistVideoCrossRef
 import io.github.aedev.flow.data.model.Video
@@ -16,6 +18,7 @@ data class QuickActionMessage(
     val arg: String? = null,
     val undo: QuickActionUndo? = null,
     val plainText: String? = null,
+    val play: Video? = null, // fork: Coda, offers to play this video instead of an undo
 )
 
 /** How to put an action back. Each carries the state to restore, not the state that was set. */
@@ -58,6 +61,16 @@ sealed interface QuickActionUndo {
     /** A song swiped out of the music queue. */
     data class MusicQueueRemoval(
         val removed: EnhancedMusicPlayerManager.RemovedQueueTrack,
+    ) : QuickActionUndo
+
+    /** A video taken out of the Coda by hand (fork: Coda). */
+    data class CodaRemoval(
+        val removed: RemovedFromCoda,
+    ) : QuickActionUndo
+
+    /** The Coda emptied with Clear (fork: Coda). */
+    data class CodaCleared(
+        val before: Coda,
     ) : QuickActionUndo
 
     /** A download queued because the viewer opened the video. */

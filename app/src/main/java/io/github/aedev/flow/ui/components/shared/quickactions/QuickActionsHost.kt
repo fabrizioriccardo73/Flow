@@ -15,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.aedev.flow.R
+import io.github.aedev.flow.data.model.Video // fork: Coda
 import io.github.aedev.flow.ui.components.shared.MediaDownloadPrompt
 import kotlinx.coroutines.flow.collectLatest
 
@@ -26,6 +27,7 @@ import kotlinx.coroutines.flow.collectLatest
 fun QuickActionsHost(
     snackbarHostState: SnackbarHostState,
     viewModel: QuickActionsViewModel = sharedQuickActionsViewModel(),
+    onPlay: (Video) -> Unit = {}, // fork: Coda
 ) {
     val context = LocalContext.current
     val pending by viewModel.pendingDownload.collectAsStateWithLifecycle()
@@ -54,9 +56,12 @@ fun QuickActionsHost(
             val result =
                 snackbarHostState.showSnackbar(
                     message = text,
-                    actionLabel = undo?.let { context.getString(R.string.undo) },
+                    actionLabel =
+                        undo?.let { context.getString(R.string.undo) }
+                            ?: message.play?.let { context.getString(R.string.play) }, // fork: Coda
                     duration = SnackbarDuration.Short,
                 )
+            message.play?.takeIf { result == SnackbarResult.ActionPerformed }?.let(onPlay) // fork: Coda
             if (undo != null && result == SnackbarResult.ActionPerformed) {
                 if (undo is QuickActionUndo.RestoreFromTrash) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {

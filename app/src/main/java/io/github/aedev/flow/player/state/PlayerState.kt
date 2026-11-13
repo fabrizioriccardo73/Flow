@@ -33,6 +33,7 @@ data class EnhancedPlayerState(
     val queueSize: Int = 0,
     val isQueueLooping: Boolean = false,
     val isQueueShuffled: Boolean = false,
+    val codaSize: Int = 0, // fork: Coda
     val isLooping: Boolean = false,
     val isLive: Boolean = false,
     val isAtLiveEdge: Boolean = false,

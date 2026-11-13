@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.R
+import io.github.aedev.flow.coda.ui.CodaDoneButton // fork: Coda
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.ui.components.shared.MediaThumbnail
 
@@ -54,6 +55,7 @@ fun PlaylistQueueDock(
     queueSize: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onDone: (() -> Unit)? = null, // fork: Coda, the playing Coda video is done with
 ) {
     val open = rememberQueueOpenAction(onClick)
     Surface(
@@ -76,6 +78,7 @@ fun PlaylistQueueDock(
             queueSize = queueSize,
             actionIcon = Icons.Rounded.KeyboardArrowUp,
             onAction = open,
+            onDone = onDone, // fork: Coda
             modifier = Modifier.fillMaxSize(),
         )
     }
@@ -90,6 +93,7 @@ fun PlaylistQueuePaneCard(
     queueSize: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onDone: (() -> Unit)? = null, // fork: Coda, the playing Coda video is done with
 ) {
     val open = rememberQueueOpenAction(onClick)
     Surface(
@@ -108,6 +112,7 @@ fun PlaylistQueuePaneCard(
             queueSize = queueSize,
             actionIcon = Icons.AutoMirrored.Rounded.QueueMusic,
             onAction = open,
+            onDone = onDone, // fork: Coda
             modifier = Modifier.padding(vertical = 12.dp),
         )
     }
@@ -131,6 +136,7 @@ private fun QueueNextUpRow(
     actionIcon: ImageVector,
     onAction: () -> Unit,
     modifier: Modifier = Modifier,
+    onDone: (() -> Unit)? = null, // fork: Coda
 ) {
     Row(
         modifier = modifier.padding(start = 12.dp, end = 10.dp),
@@ -179,6 +185,7 @@ private fun QueueNextUpRow(
             }
         }
 
+        onDone?.let { done -> CodaDoneButton(done) } // fork: Coda
         FilledTonalIconButton(
             onClick = onAction,
             shapes = IconButtonDefaults.shapes(),

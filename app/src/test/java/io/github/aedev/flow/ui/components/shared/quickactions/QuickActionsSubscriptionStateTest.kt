@@ -47,6 +47,7 @@ class QuickActionsSubscriptionStateTest {
             playerManager = { mockk(relaxed = true) },
             musicVideos = mockk(relaxed = true),
             autoDownload = mockk(relaxed = true),
+            coda = mockk(relaxed = true), // fork: Coda
         )
 
     @Test

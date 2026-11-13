@@ -83,6 +83,7 @@ class QuickActionsMessagesTest {
             playerManager = { mockk(relaxed = true) },
             musicVideos = MusicVideoVersions { videoSearch(it) },
             autoDownload = autoDownload,
+            coda = mockk(relaxed = true), // fork: Coda
         )
 
     private fun kotlinx.coroutines.test.TestScope.messagesOf(viewModel: QuickActionsViewModel): List<QuickActionMessage> {

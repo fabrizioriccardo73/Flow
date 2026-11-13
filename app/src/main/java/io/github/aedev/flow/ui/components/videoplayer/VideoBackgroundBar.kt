@@ -130,7 +130,7 @@ internal fun VideoBackgroundBar(
             Rect(ThumbnailStart.toPx(), (heightPx - height) / 2f, ThumbnailStart.toPx() + width, (heightPx + height) / 2f)
         }
     val playerState by EnhancedPlayerManager.getInstance().playerState.collectAsStateWithLifecycle()
-    val hasQueue = hasVisibleQueue(playerState.queueTitle, playerState.queueSize)
+    val hasQueue = hasVisibleQueue(playerState.queueTitle, playerState.queueSize, playerState.codaSize) // fork: Coda
     val motion = MaterialTheme.motionScheme
     val onRestoreState = rememberUpdatedState(onRestore)
 

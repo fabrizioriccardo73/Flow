@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.aedev.flow.R
+import io.github.aedev.flow.coda.ui.CodaTopBarAction // fork: Coda
 
 /**
  * The Notifications and Settings actions every root destination gets.
@@ -42,6 +43,7 @@ internal fun FlowGlobalActionsRow() {
     val actions = LocalFlowGlobalActions.current ?: return
     val unreadCount by actions.unreadNotifications.collectAsStateWithLifecycle()
 
+    actions.codaCount?.let { CodaTopBarAction(it, actions.onOpenCoda) } // fork: Coda
     FlowNotificationsAction(
         unreadCount = unreadCount,
         onClick = actions.onOpenNotifications,

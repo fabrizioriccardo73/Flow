@@ -23,6 +23,8 @@ data class FlowGlobalActions(
     val unreadNotifications: StateFlow<Int>,
     val onOpenNotifications: () -> Unit,
     val onOpenSettings: () -> Unit,
+    val codaCount: StateFlow<Int>? = null, // fork: Coda
+    val onOpenCoda: () -> Unit = {}, // fork: Coda
 )
 
 /**
@@ -40,14 +42,18 @@ fun ProvideFlowGlobalActions(
     unreadNotifications: StateFlow<Int>,
     onOpenNotifications: () -> Unit,
     onOpenSettings: () -> Unit,
+    codaCount: StateFlow<Int>? = null, // fork: Coda
+    onOpenCoda: () -> Unit = {}, // fork: Coda
     content: @Composable () -> Unit,
 ) {
     val actions =
-        remember(unreadNotifications, onOpenNotifications, onOpenSettings) {
+        remember(unreadNotifications, onOpenNotifications, onOpenSettings, codaCount, onOpenCoda) {
             FlowGlobalActions(
                 unreadNotifications = unreadNotifications,
                 onOpenNotifications = onOpenNotifications,
                 onOpenSettings = onOpenSettings,
+                codaCount = codaCount, // fork: Coda
+                onOpenCoda = onOpenCoda, // fork: Coda
             )
         }
     CompositionLocalProvider(LocalFlowGlobalActions provides actions, content = content)

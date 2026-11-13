@@ -41,4 +41,19 @@
     <string name="youtube_sync_mass_removal_confirm">Rimuovi comunque</string>
     <string name="youtube_sync_side_flow">in Flow</string>
     <string name="youtube_sync_side_youtube">su YouTube</string>
+    <!-- Coda -->
+    <string name="coda_title">Coda</string>
+    <string name="coda_added_toast">Aggiunto alla Coda</string>
+    <string name="coda_already_queued_toast">Già in Coda</string>
+    <string name="coda_next_from">Dopo, da: %1$s</string>
+    <string name="coda_clear">Svuota</string>
+    <string name="coda_empty">La Coda è vuota. Usa «Aggiungi alla Coda» su un video.</string>
+    <string name="coda_cleared_toast">Coda svuotata</string>
+    <plurals name="coda_video_count">
+        <item quantity="one">%1$d video</item>
+        <item quantity="other">%1$d video</item>
+    </plurals>
+    <string name="coda_remove_desc">Toglilo da ciò che verrà riprodotto</string>
+    <string name="coda_done">Fatto</string>
+    <string name="coda_done_desc">Ho finito con questo video: toglilo dalla Coda e passa al prossimo</string>
 </resources>

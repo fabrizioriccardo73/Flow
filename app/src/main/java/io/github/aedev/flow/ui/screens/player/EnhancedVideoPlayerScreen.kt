@@ -18,9 +18,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource // fork: Coda
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
+import io.github.aedev.flow.R // fork: Coda
+import io.github.aedev.flow.coda.dockNextUp // fork: Coda
 import io.github.aedev.flow.data.localmedia.LocalMediaIds
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.player.EnhancedPlayerManager
@@ -119,13 +122,27 @@ internal fun EnhancedVideoPlayerScreen(
         val isWideLayout = layoutMode == PlayerLayoutMode.WIDE
         val isMediumLayout = layoutMode == PlayerLayoutMode.MEDIUM
 
-        val queueVideos by EnhancedPlayerManager.getInstance().queueVideos.collectAsStateWithLifecycle(initialValue = emptyList())
-        val currentQueueIndex by EnhancedPlayerManager.getInstance().currentQueueIndexState.collectAsStateWithLifecycle(
+        val playerManager = EnhancedPlayerManager.getInstance() // fork: Coda, one lookup for the three flows below
+        val queueVideos by playerManager.queueVideos.collectAsStateWithLifecycle(initialValue = emptyList())
+        val currentQueueIndex by playerManager.currentQueueIndexState.collectAsStateWithLifecycle(
             initialValue = -1,
         )
-        val dockPlacement = queueDockPlacement(hasVisibleQueue(playerState.queueTitle, queueVideos.size), layoutMode)
+        val dockPlacement =
+            queueDockPlacement(hasVisibleQueue(playerState.queueTitle, queueVideos.size, playerState.codaSize), layoutMode) // fork: Coda
         val showsQueueDock = dockPlacement == QueueDockPlacement.FLOATING
-        val nextVideo = nextQueueVideo(queueVideos, currentQueueIndex, playerState.isQueueLooping)
+        // fork: Coda. The dock follows playback order, Contesto then Coda.
+        val coda by playerManager.codaState.collectAsStateWithLifecycle()
+        val nextUp =
+            dockNextUp(
+                contestoNext = nextQueueVideo(queueVideos, currentQueueIndex, playerState.isQueueLooping),
+                contestoSize = queueVideos.size,
+                contestoTitle = playerState.queueTitle,
+                coda = coda,
+                currentVideoId = playerState.currentVideoId,
+                codaName = stringResource(R.string.coda_title),
+            )
+        val onCodaDone: (() -> Unit)? =
+            if (coda.playingId != null && coda.playingId == playerState.currentVideoId) ({ viewModel.playNext() }) else null
         val dockReserve =
             if (showsQueueDock) {
                 PlaylistQueueDockDefaults.Height + QueueDockMargin +
@@ -198,11 +215,12 @@ internal fun EnhancedVideoPlayerScreen(
                                 if (dockPlacement == QueueDockPlacement.IN_PANE) {
                                     {
                                         PlaylistQueuePaneCard(
-                                            nextVideo = nextVideo?.value,
-                                            nextPosition = (nextVideo?.index ?: 0) + 1,
-                                            playlistName = playerState.queueTitle.orEmpty(),
-                                            queueSize = queueVideos.size,
+                                            nextVideo = nextUp.video, // fork: Coda
+                                            nextPosition = nextUp.position,
+                                            playlistName = nextUp.listName,
+                                            queueSize = nextUp.listSize,
                                             onClick = { screenState.open(PlayerSheet.Queue) },
+                                            onDone = onCodaDone, // fork: Coda
                                         )
                                     }
                                 } else {
@@ -276,11 +294,12 @@ internal fun EnhancedVideoPlayerScreen(
 
         if (showsQueueDock) {
             PlaylistQueueDock(
-                nextVideo = nextVideo?.value,
-                nextPosition = (nextVideo?.index ?: 0) + 1,
-                playlistName = playerState.queueTitle.orEmpty(),
-                queueSize = queueVideos.size,
+                nextVideo = nextUp.video, // fork: Coda
+                nextPosition = nextUp.position,
+                playlistName = nextUp.listName,
+                queueSize = nextUp.listSize,
                 onClick = { screenState.open(PlayerSheet.Queue) },
+                onDone = onCodaDone, // fork: Coda
                 modifier =
                     Modifier
                         .align(Alignment.BottomCenter)

@@ -32,6 +32,9 @@ import androidx.compose.ui.unit.dp
 import androidx.core.os.ConfigurationCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.aedev.flow.R
+import io.github.aedev.flow.coda.ui.CodaQueueSheet // fork: Coda
+import io.github.aedev.flow.coda.ui.CodaSection // fork: Coda
+import io.github.aedev.flow.coda.ui.ContestoSection // fork: Coda
 import io.github.aedev.flow.data.model.Comment
 import io.github.aedev.flow.data.model.LiveChatMessage
 import io.github.aedev.flow.data.model.Video
@@ -50,7 +53,6 @@ import io.github.aedev.flow.ui.components.shared.quickactions.QuickActionUndo
 import io.github.aedev.flow.ui.components.shared.quickactions.sharedQuickActionsViewModel
 import io.github.aedev.flow.ui.components.shared.rememberDateDisplaySettings
 import io.github.aedev.flow.ui.components.videoplayer.sheet.FlowChaptersBottomSheet
-import io.github.aedev.flow.ui.components.videoplayer.sheet.FlowPlaylistQueueBottomSheet
 import io.github.aedev.flow.ui.components.videoplayer.sheet.FlowTranscriptBottomSheet
 import io.github.aedev.flow.ui.components.videoplayer.sheet.LiveChatList
 import io.github.aedev.flow.ui.components.videoplayer.sheet.PlayerCommentsPanel
@@ -114,29 +116,52 @@ internal fun PlayerQueueSheetHost(
     onSheetProgressChange: (Float) -> Unit = {},
     loadStreamsInPlayer: Boolean = false,
     footer: (@Composable () -> Unit)? = null,
+    onStartCoda: ((Video) -> Unit)? = null, // fork: Coda, plays a Coda video when nothing is playing
 ) {
     val manager = EnhancedPlayerManager.getInstance()
     val queueVideos by manager.queueVideos.collectAsStateWithLifecycle(initialValue = emptyList())
     val currentQueueIndex by manager.currentQueueIndexState.collectAsStateWithLifecycle(initialValue = -1)
     val playerState by manager.playerState.collectAsStateWithLifecycle()
+    val coda by manager.codaState.collectAsStateWithLifecycle() // fork: Coda
     val quickActions = sharedQuickActionsViewModel()
     val removedFromQueue = stringResource(R.string.removed_from_queue)
 
-    FlowPlaylistQueueBottomSheet(
-        queueVideos = queueVideos,
-        currentQueueIndex = currentQueueIndex,
-        playlistTitle = playerState.queueTitle,
-        isLooping = playerState.isQueueLooping,
-        isShuffled = playerState.isQueueShuffled,
-        onLoopToggle = manager::toggleQueueLoop,
-        onShuffleToggle = manager::toggleQueueShuffle,
-        onPlayVideoAtIndex = { index -> manager.playVideoAtIndex(index, loadStreamsInPlayer = loadStreamsInPlayer) },
-        onRemoveVideoAtIndex = { index ->
-            manager.removeVideoAtIndex(index)?.let { removed ->
-                quickActions.announce(removedFromQueue, QuickActionUndo.QueueRemoval(removed))
-            }
-        },
-        onMoveVideoAtIndex = manager::moveVideoAtIndex,
+    // fork: Coda. The Contesto, then the Coda, in the order they play.
+    val playCoda: (Video) -> Unit = { video ->
+        val start = onStartCoda
+        if (playerState.currentVideoId == null && start != null) start(video) else manager.playCodaVideo(video, loadStreamsInPlayer)
+    }
+    CodaQueueSheet(
+        contesto =
+            ContestoSection(
+                videos = queueVideos,
+                currentIndex = currentQueueIndex,
+                title = playerState.queueTitle,
+                isLooping = playerState.isQueueLooping,
+                isShuffled = playerState.isQueueShuffled,
+                onLoopToggle = manager::toggleQueueLoop,
+                onShuffleToggle = manager::toggleQueueShuffle,
+                onPlayAt = { index -> manager.playVideoAtIndex(index, loadStreamsInPlayer = loadStreamsInPlayer) },
+                onRemoveAt = { index ->
+                    manager.removeVideoAtIndex(index)?.let { removed ->
+                        quickActions.announce(removedFromQueue, QuickActionUndo.QueueRemoval(removed))
+                    }
+                },
+                onMove = manager::moveVideoAtIndex,
+            ),
+        coda =
+            CodaSection(
+                coda = coda,
+                onPlay = playCoda,
+                onRemove = quickActions::removeFromCoda,
+                onMove = quickActions::moveInCoda,
+                onClear = quickActions::clearCoda,
+                onStart =
+                    coda.videos
+                        .firstOrNull()
+                        ?.takeIf { playerState.currentVideoId == null }
+                        ?.let { first -> { playCoda(first) } },
+            ),
         onDismiss = onDismiss,
         expandedHeight = expandedHeight,
         collapsedHeight = collapsedHeight,
@@ -145,6 +170,7 @@ internal fun PlayerQueueSheetHost(
         modifier = if (asSidePanel) Modifier.fillMaxSize() else Modifier,
         footer = footer,
     )
+    // fork: end
 }
 
 @Composable

@@ -226,16 +226,30 @@ private fun playbackRows(
         ) {
             viewModel.playVideoNext(video)
             onDismiss()
+        }.takeUnless { video.isShort }, // fork: Coda, Shorts stay out of it
+        // fork: Coda. A video already in the Coda offers to leave it instead.
+        if (video.id in viewModel.codaIds.collectAsStateWithLifecycle().value) {
+            actionRow(
+                "remove_from_coda",
+                Icons.Outlined.PlaylistRemove,
+                stringResource(R.string.remove_from_queue),
+                stringResource(R.string.coda_remove_desc),
+            ) {
+                viewModel.removeFromCoda(video)
+                onDismiss()
+            }
+        } else {
+            actionRow(
+                "add_to_queue",
+                Icons.AutoMirrored.Outlined.PlaylistAdd,
+                stringResource(R.string.add_video_to_queue),
+                stringResource(R.string.add_video_to_queue_desc),
+            ) {
+                viewModel.addVideoToQueue(video)
+                onDismiss()
+            }.takeUnless { video.isShort }
         },
-        actionRow(
-            "add_to_queue",
-            Icons.AutoMirrored.Outlined.PlaylistAdd,
-            stringResource(R.string.add_video_to_queue),
-            stringResource(R.string.add_video_to_queue_desc),
-        ) {
-            viewModel.addVideoToQueue(video)
-            onDismiss()
-        },
+        // fork: end
     )
 
 /** The channel as one row, avatars stacked like the card's for a collaboration, with its subscribe button. */

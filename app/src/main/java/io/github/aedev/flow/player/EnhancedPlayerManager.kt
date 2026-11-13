@@ -27,6 +27,8 @@ import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.exoplayer.upstream.DefaultBandwidthMeter
 import androidx.media3.session.MediaSession
 import dagger.hilt.android.EntryPointAccessors
+import io.github.aedev.flow.coda.Coda // fork: Coda
+import io.github.aedev.flow.coda.VideoCoda // fork: Coda
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.SponsorBlockAction
 import io.github.aedev.flow.data.local.VideoQuality
@@ -241,6 +243,27 @@ class EnhancedPlayerManager private constructor() {
 
     // Coroutine scope
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+
+    // fork: Coda. Set once by the DI graph; until then the player behaves as if the Coda were empty.
+    private val codaSnapshot = MutableStateFlow(Coda())
+    val codaState: StateFlow<Coda> = codaSnapshot.asStateFlow()
+
+    @Volatile
+    var videoCoda: VideoCoda? = null
+        set(value) {
+            if (field != null || value == null) return
+            field = value
+            scope.launch {
+                value.state.collect { coda ->
+                    codaSnapshot.value = coda
+                    updateQueueState()
+                    // Nothing to preload for while nothing plays.
+                    if (currentVideoId != null) preload.request("coda")
+                }
+            }
+        }
+
+    // fork: end
     private val buildScope = PlayerBuildScope(scope)
 
     private val autoplayCountdownController =
@@ -1605,15 +1628,13 @@ class EnhancedPlayerManager private constructor() {
 
     fun playNext(loadStreamsInPlayer: Boolean = true): Boolean {
         val nextIndex =
-            queue.nextIndex() ?: run {
-                autoNextLog("playNext queue unavailable")
-                return false
-            }
+            queue.nextIndex() ?: return playNextFromCoda(loadStreamsInPlayer) // fork: Coda
         if (nextIndex == queue.currentIndex) {
             replay()
             return true
         }
         val nextVideo = queue.videoAt(nextIndex) ?: return false
+        finishCurrentCodaVideo() // fork: Coda, moving on is done with it
         if (advanceToPreloadedItem(nextVideo.id)) {
             autoNextLog("playNext using preloaded window next=${nextVideo.id}")
             return true
@@ -1632,7 +1653,42 @@ class EnhancedPlayerManager private constructor() {
         return true
     }
 
-    fun hasNext(): Boolean = queue.hasNext
+    fun hasNext(): Boolean = queue.hasNext || codaNext() != null // fork: Coda
+
+    // fork: Coda. The Coda plays once the Contesto (this queue) has nothing left.
+    private fun codaNext(): Video? = codaSnapshot.value.nextAfter(currentVideoId ?: GlobalPlayerState.currentVideo.value?.id)
+
+    private fun finishCurrentCodaVideo() {
+        (currentVideoId ?: GlobalPlayerState.currentVideo.value?.id)?.let { videoCoda?.finish(it) }
+    }
+
+    private fun playNextFromCoda(loadStreamsInPlayer: Boolean): Boolean {
+        finishCurrentCodaVideo()
+        val video =
+            codaNext() ?: run {
+                autoNextLog("playNext queue and Coda unavailable")
+                return false
+            }
+        if (advanceToPreloadedItem(video.id)) return true
+        playCodaVideo(video, loadStreamsInPlayer)
+        return true
+    }
+
+    /** Plays [video] from the Coda as a video of its own: the Contesto it leaves behind is over. */
+    fun playCodaVideo(
+        video: Video,
+        loadStreamsInPlayer: Boolean = true,
+    ) {
+        if (!isOnMainThread()) {
+            mainHandler.post { playCodaVideo(video, loadStreamsInPlayer) }
+            return
+        }
+        autoNextLog("playCodaVideo ${video.id}")
+        queue.clear()
+        startPlaybackFromQueue(video, loadStreamsInPlayer)
+        updateQueueState()
+    }
+    // fork: end
 
     /**
      * The playing video's streams were refused and could not be swapped in place. The player owns
@@ -1697,10 +1753,8 @@ class EnhancedPlayerManager private constructor() {
     fun isReachedByQueueAdvance(videoId: String): Boolean = queue.isReachedByAdvance(videoId)
 
     /**
-     * Insert [video] immediately after the current position (Play Next).
-     * If no queue is active but a video is currently playing, silently build a
-     * [currentVideo, video] queue starting at index 0 — no playback interruption.
-     * If nothing is playing at all, start the video immediately.
+     * Play Next: [video] goes first in the Coda and right after the current video. Nothing starts
+     * playing (fork: Coda).
      */
     fun addVideoToQueueNext(video: Video) {
         if (!isOnMainThread()) {
@@ -1710,18 +1764,21 @@ class EnhancedPlayerManager private constructor() {
         }
         PlaybackTarget.current?.let { return it.playNext(video.id) }
         autoNextLog("addVideoToQueueNext ${video.id}")
-        when (queue.addNext(video, GlobalPlayerState.currentVideo.value)) {
-            QueueAddOutcome.NoActiveQueue -> setQueue(listOf(video), 0)
+        // fork: Coda. First in the Coda, and right after the current video in the Contesto so it
+        // plays next even inside a playlist, which then resumes. With nothing playing it only waits.
+        videoCoda?.putFirst(video)
+        val playing = GlobalPlayerState.currentVideo.value ?: return
+        if (playing.id == video.id) return
+        when (queue.addNext(video, playing)) {
+            QueueAddOutcome.NoActiveQueue -> Unit
             QueueAddOutcome.QueueCreated -> onQueueMutated("queue-created-play-next")
             QueueAddOutcome.Inserted -> onQueueMutated("queue-play-next")
         }
+        // fork: end
     }
 
     /**
-     * Append [video] to the end of the current queue.
-     * If no queue is active but a video is currently playing, silently build a
-     * [currentVideo, video] queue starting at index 0 — no playback interruption.
-     * If nothing is playing at all, start the video immediately.
+     * Add to queue: [video] goes last in the Coda. Nothing starts playing (fork: Coda).
      */
     fun addVideoToQueue(video: Video) {
         if (!isOnMainThread()) {
@@ -1731,11 +1788,7 @@ class EnhancedPlayerManager private constructor() {
         }
         PlaybackTarget.current?.let { return it.addToQueue(video.id) }
         autoNextLog("addVideoToQueue ${video.id}")
-        when (queue.append(video, GlobalPlayerState.currentVideo.value)) {
-            QueueAddOutcome.NoActiveQueue -> setQueue(listOf(video), 0)
-            QueueAddOutcome.QueueCreated -> onQueueMutated("queue-created-add")
-            QueueAddOutcome.Inserted -> onQueueMutated("queue-add")
-        }
+        videoCoda?.append(video) // fork: Coda, the Contesto is left alone
     }
 
     fun playVideoAtIndex(
@@ -1827,6 +1880,7 @@ class EnhancedPlayerManager private constructor() {
                 queueSize = queue.size,
                 isQueueLooping = queue.loopEnabled,
                 isQueueShuffled = queue.shuffleEnabled,
+                codaSize = codaSnapshot.value.videos.size, // fork: Coda
             )
     }
 
@@ -1931,8 +1985,11 @@ class EnhancedPlayerManager private constructor() {
 
     internal fun nextSessionVideo(): Video? =
         when {
-            hasNext() -> if (queueAutoplayEnabled) queue.nextVideo() else null
+            // fork: Coda, after the Contesto
+            hasNext() -> if (queueAutoplayEnabled) queue.nextVideo() ?: codaNext() else null
+
             autoplayEnabled -> autoplayCandidates.firstOrNull()
+
             else -> null
         }
 
@@ -1942,6 +1999,7 @@ class EnhancedPlayerManager private constructor() {
         val durationMs = exoPlayer.duration.takeIf { it > 0L && it != C.TIME_UNSET } ?: return
         // A refocus glitch can report ENDED near the start; only a position at the end counts.
         if (!PlaybackResumePolicy.shouldRestartCompletedPlayback(exoPlayer.currentPosition, durationMs)) return
+        videoCoda?.finish(videoId) // fork: Coda, a video that ended is done with
         _playbackCompletedEvent.tryEmit(PlaybackCompletion(videoId, durationMs))
     }
 
@@ -2333,8 +2391,11 @@ class EnhancedPlayerManager private constructor() {
         val fromQueue = hasNext()
         val nextVideo =
             when {
-                fromQueue -> if (queueAutoplayEnabled) queue.nextVideo() else null
+                // fork: Coda, after the Contesto
+                fromQueue -> if (queueAutoplayEnabled) queue.nextVideo() ?: codaNext() else null
+
                 autoplayEnabled && autoplayCandidates.isNotEmpty() -> autoplayCandidates.first()
+
                 else -> null
             } ?: return null
         if (nextVideo.isLive || nextVideo.isUpcoming) return null
@@ -2351,8 +2412,14 @@ class EnhancedPlayerManager private constructor() {
         currentSabrInfo = null
         sabrPreferred = false
 
+        finishCurrentCodaVideo() // fork: Coda, the window moved past it
         if (pre.fromQueue) {
-            queue.nextIndex()?.let { nextIndex -> queue.moveTo(nextIndex) }
+            // fork: Coda. Not the Contesto's next video, so the Coda's: the Contesto is over.
+            if (queue.nextVideo()?.id == data.enrichedVideo.id) {
+                queue.nextIndex()?.let { nextIndex -> queue.moveTo(nextIndex) }
+            } else {
+                queue.clear()
+            }
         } else {
             autoplayCandidates = autoplayCandidates.filter { it.id != data.enrichedVideo.id }
         }

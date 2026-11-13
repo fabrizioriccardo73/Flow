@@ -19,11 +19,15 @@ internal fun queueDockPlacement(
         else -> QueueDockPlacement.FLOATING
     }
 
-/** A named queue shows from its first video; an unnamed one only once something follows the current video. */
+/**
+ * A named queue shows from its first video; an unnamed one only once something follows the current
+ * video. A Coda with any video shows too (fork: Coda).
+ */
 internal fun hasVisibleQueue(
     queueTitle: String?,
     queueSize: Int,
-): Boolean = if (queueTitle != null) queueSize > 0 else queueSize > 1
+    codaSize: Int = 0, // fork: Coda
+): Boolean = codaSize > 0 || if (queueTitle != null) queueSize > 0 else queueSize > 1
 
 /**
  * What plays after [currentIndex], with its index: the next video, the first again when the queue

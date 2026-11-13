@@ -26,6 +26,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import io.github.aedev.flow.MainActivity
+import io.github.aedev.flow.coda.ui.CodaViewModel // fork: Coda
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.profile.PendingSlice
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
@@ -107,6 +108,7 @@ fun FlowApp(
     val playerViewModel: VideoPlayerViewModel = hiltViewModel(activity!!)
     // Activity-scoped so the unread badge has exactly one collector for the whole shell.
     val notificationViewModel: NotificationViewModel = hiltViewModel(activity)
+    val codaViewModel: CodaViewModel = hiltViewModel(activity) // fork: Coda
     val equalizerViewModel: EqualizerViewModel = hiltViewModel(activity)
     val playerUiStateResult = playerViewModel.uiState.collectAsStateWithLifecycle()
     val playerUiState by playerUiStateResult
@@ -490,6 +492,8 @@ fun FlowApp(
                                 unreadNotifications = notificationViewModel.unreadCount,
                                 onOpenNotifications = { navController.navigate("notifications") },
                                 onOpenSettings = { navController.navigate("settings") },
+                                codaCount = codaViewModel.count, // fork: Coda
+                                onOpenCoda = codaViewModel::openSheet, // fork: Coda
                             ) {
                                 CompositionLocalProvider(
                                     *mediaNavigationLocals(mediaNavigator),
