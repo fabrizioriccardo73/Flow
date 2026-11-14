@@ -95,3 +95,37 @@ _Avoid_: coda, queue, playlist in corso
 **Autoplay**:
 I video suggeriti che il player riproduce quando sia il Contesto di riproduzione sia la Coda sono esauriti.
 _Avoid_: coda, prossimi, consigliati
+
+## Intelligenza artificiale
+
+**Provider AI**:
+Un servizio esterno che esegue modelli linguistici per conto dell'utente, con la Chiave API dell'utente; per ora Google AI Studio, Groq e OpenRouter.
+_Avoid_: backend AI, servizio AI, LLM (come nome del servizio)
+
+**Chiave API**:
+La credenziale personale che l'utente ottiene da un Provider AI e inserisce in un profilo Flow; un profilo ne ha al più una per Provider AI. È Flow-only. Un profilo senza Provider attivo con una Chiave API valida non ha funzioni AI.
+_Avoid_: API key, token, chiave (senza qualificatore)
+
+**Provider attivo**:
+Il Provider AI che un profilo usa per tutte le richieste AI; ce n'è uno solo alla volta, e non si passa da solo a un altro.
+_Avoid_: provider predefinito, provider corrente
+
+**Riassunto video**:
+I punti chiave di un video, con i momenti in cui compaiono, ricavati dalla sua trascrizione e scritti nella lingua dell'app; un video senza trascrizione non ne ha. È Device-local.
+_Avoid_: sommario, summary, riepilogo
+
+**Domande sul video**:
+Una conversazione in cui l'utente chiede cose su un singolo video e le risposte vengono dalla sua trascrizione; non viene conservata.
+_Avoid_: chat, chat col video, Q&A
+
+**Riassunto commenti**:
+Ciò che il pubblico pensa di un video, ricavato dai suoi commenti più apprezzati: opinione generale, punti ricorrenti, critiche, correzioni segnalate. È Device-local.
+_Avoid_: sentiment, analisi commenti
+
+**Organizzazione assistita**:
+Le Proposte che l'AI fa, per i canali seguiti scelti dall'utente, su Gruppi e Lingua del canale; non cambia nulla finché l'utente non accetta.
+_Avoid_: auto-categorizzazione, smart groups, raggruppamento automatico
+
+**Proposta**:
+Un singolo suggerimento dell'Organizzazione assistita per un canale: un Gruppo o Sottogruppo esistente, un nuovo Gruppo, o una Lingua del canale; l'utente la accetta o la rifiuta.
+_Avoid_: suggerimento, raccomandazione
