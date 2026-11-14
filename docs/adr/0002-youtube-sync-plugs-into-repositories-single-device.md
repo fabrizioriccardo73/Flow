@@ -6,5 +6,6 @@ Un solo YouTube Sync Device per gruppo di dispositivi, il telefono, parla con Yo
 
 ## Consequences
 
+- Una TV (Fire TV, Android TV) non diventa mai YouTube Sync Device: anche con il fork installato, sulla TV il collegamento dell'account è bloccato e la pagina spiega di collegarlo dal telefono. Il login con Google nel browser è scomodo con il telecomando e poco affidabile su Fire OS, e la TV riceve comunque tutto tramite la Device Sync. Questo non impedisce di collegare l'account su due telefoni dello stesso gruppo (ticket 14).
 - Una modifica fatta su un dispositivo diverso dal YouTube Sync Device arriva a YouTube con il ritardo combinato delle due sincronizzazioni (Device Sync, circa ogni ora, più YouTube Sync).
 - I conflitti si risolvono su due piani distinti. Tra i dispositivi vale la regola della Device Sync: vince la modifica più recente. Tra Flow e YouTube vale la regola della YouTube Sync: confronto a tre vie con la Sync Baseline, un'eliminazione prevale su una modifica, e su modifiche in conflitto vince YouTube.

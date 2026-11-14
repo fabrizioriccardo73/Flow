@@ -58,11 +58,13 @@ fun SaveToCollectionSheet(
     onToggle: (CollectionSheetEntry) -> Unit,
     onCreateNew: () -> Unit,
     onDismiss: () -> Unit,
+    header: (@Composable () -> Unit)? = null, // fork: Filtri iscrizioni
+    entryModifier: (CollectionSheetEntry) -> Modifier = { Modifier }, // fork: Sottogruppi
 ) {
     val presenter = LocalFlowSheetPresenter.current
     if (presenter != null) {
         presenter.Present(onDismiss = onDismiss, onBack = null) {
-            CollectionSheetContent(title, entries, placeholderIcon, createLabel, emptyLabel, onToggle, onCreateNew)
+            CollectionSheetContent(title, entries, placeholderIcon, createLabel, emptyLabel, onToggle, onCreateNew, header = header, entryModifier = entryModifier) // fork
         }
         return
     }
@@ -83,6 +85,8 @@ fun SaveToCollectionSheet(
             emptyLabel = emptyLabel,
             onToggle = onToggle,
             onCreateNew = onCreateNew,
+            header = header, // fork: Filtri iscrizioni
+            entryModifier = entryModifier, // fork: Sottogruppi
             modifier =
                 Modifier
                     .heightIn(max = maxHeight)
@@ -102,6 +106,8 @@ private fun CollectionSheetContent(
     onToggle: (CollectionSheetEntry) -> Unit,
     onCreateNew: () -> Unit,
     modifier: Modifier = Modifier,
+    header: (@Composable () -> Unit)? = null, // fork: Filtri iscrizioni
+    entryModifier: (CollectionSheetEntry) -> Modifier = { Modifier }, // fork: Sottogruppi
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
@@ -111,6 +117,7 @@ private fun CollectionSheetContent(
         )
 
         HorizontalDivider()
+        header?.invoke() // fork: Filtri iscrizioni
 
         LazyColumn(
             modifier =
@@ -136,6 +143,7 @@ private fun CollectionSheetContent(
                 ) { entry ->
                     MediaRow(
                         title = entry.name,
+                        modifier = entryModifier(entry), // fork: Sottogruppi
                         subtitle = entry.supporting,
                         titleMaxLines = 1,
                         onClick = { onToggle(entry) },

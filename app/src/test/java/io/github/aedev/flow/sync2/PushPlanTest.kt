@@ -23,7 +23,8 @@ class PushPlanTest {
         val lastSent = all.associateWith { now - hour }
         val pushed = collectionsToPush(all, unchanged = tracked - SyncCollection.WATCH_HISTORY, lastSent = lastSent, nowMs = now)
         assertEquals(
-            listOf(SyncCollection.WATCH_HISTORY, SyncCollection.LIKES, SyncCollection.SETTINGS, SyncCollection.SUBSCRIBED_CHANNELS),
+            listOf(SyncCollection.WATCH_HISTORY, SyncCollection.LIKES, SyncCollection.SETTINGS, SyncCollection.SUBSCRIBED_CHANNELS) +
+                io.github.aedev.flow.subsfilters.sync.ForkSync.COLLECTIONS, // fork: Filtri iscrizioni
             pushed,
         )
     }

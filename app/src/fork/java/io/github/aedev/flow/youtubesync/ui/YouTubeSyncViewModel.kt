@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /** What happened to the last link or unlink, for a snackbar. */
-enum class LinkMessage { LINKED, UNLINKED, CANCELLED, NOT_CONFIGURED, FAILED, OFFLINE }
+enum class LinkMessage { LINKED, UNLINKED, CANCELLED, NOT_CONFIGURED, USE_PHONE, FAILED, OFFLINE }
 
 /** Where "Sync now" stands. */
 sealed interface SyncUiState {
@@ -76,6 +76,9 @@ class YouTubeSyncViewModel
         val running: StateFlow<Boolean> = runner.running
 
         val isConfigured: Boolean get() = manager.isConfigured
+
+        /** False on a TV, where the screen explains to link the account on the phone. */
+        val canLinkHere: Boolean get() = manager.canLinkHere
 
         private val _working = MutableStateFlow(false)
         val working: StateFlow<Boolean> = _working.asStateFlow()
@@ -200,6 +203,7 @@ class YouTubeSyncViewModel
             when (this) {
                 is LinkedAccountException.Cancelled -> LinkMessage.CANCELLED
                 is LinkedAccountException.NotConfigured -> LinkMessage.NOT_CONFIGURED
+                is LinkedAccountException.NotOnTelevision -> LinkMessage.USE_PHONE
                 is LinkedAccountException.Transient -> LinkMessage.OFFLINE
                 else -> LinkMessage.FAILED
             }

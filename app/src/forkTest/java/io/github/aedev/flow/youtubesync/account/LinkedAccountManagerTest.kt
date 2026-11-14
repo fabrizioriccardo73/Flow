@@ -33,8 +33,11 @@ class LinkedAccountManagerTest {
         job = Job()
         val dataStore = PreferenceDataStoreFactory.create(scope = CoroutineScope(Dispatchers.IO + job)) { storeFile }
         store = LinkedAccountStore(dataStore, ReversingSealer)
-        manager = LinkedAccountManager(store, oauth, identity, OAuthConfig("client", "app:/oauth2redirect"))
+        manager = managerOn(ThisDevice(isTelevision = false))
     }
+
+    private fun managerOn(device: ThisDevice) =
+        LinkedAccountManager(store, oauth, identity, OAuthConfig("client", "app:/oauth2redirect"), device)
 
     @After
     fun tearDown() {
@@ -119,6 +122,23 @@ class LinkedAccountManagerTest {
             manager.completeLink(null)
 
             assertThat(manager.account.first()).isEqualTo(LinkedAccount("UC999", "Other channel"))
+        }
+
+    @Test
+    fun `a phone can link an account`() {
+        assertThat(manager.canLinkHere).isTrue()
+    }
+
+    @Test
+    fun `a TV never links an account, so it never becomes the YouTube Sync Device`() =
+        runBlocking<Unit> {
+            val onTv = managerOn(ThisDevice(isTelevision = true))
+
+            assertThat(onTv.canLinkHere).isFalse()
+            assertThrows(LinkedAccountException.NotOnTelevision::class.java) { onTv.authorizationIntent() }
+            assertThrows(LinkedAccountException.NotOnTelevision::class.java) { runBlocking { onTv.completeLink(null) } }
+            assertThat(onTv.account.first()).isNull()
+            assertThat(identity.seenAccessTokens).isEmpty()
         }
 
     /** Reverses the text: enough to prove the stored bytes are not the plain secret. */

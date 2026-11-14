@@ -19,6 +19,7 @@
     <string name="youtube_sync_link_offline">Could not reach Google. Try again when online.</string>
     <string name="youtube_sync_link_failed">Google refused the link. Try again.</string>
     <string name="youtube_sync_not_configured">This build has no Google OAuth client (see FORK.md)</string>
+    <string name="youtube_sync_use_phone">Link the account on your phone: this TV gets subscriptions and playlists through Device Sync</string>
     <!-- YouTube Sync: subscriptions, ticket 03 -->
     <string name="youtube_sync_sync_section">Sync</string>
     <string name="youtube_sync_now">Sync now</string>
@@ -88,4 +89,24 @@
     <string name="coda_remove_desc">Take it out of what plays next</string>
     <string name="coda_done">Done</string>
     <string name="coda_done_desc">Done with this video: remove it from the queue and play the next one</string>
+    <!-- Filtri iscrizioni -->
+    <string name="subsfilters_language_chip">Language</string>
+    <string name="subsfilters_language_dialog_title">Show videos in</string>
+    <string name="subsfilters_language_none_found">No language recognised yet among these videos.</string>
+    <string name="subsfilters_language_unknown_note">Videos whose language can\'t be told always show.</string>
+    <string name="subsfilters_language_apply">Apply</string>
+    <string name="subsfilters_language_show_all">Show all</string>
+    <string name="subsfilters_channel_language">Language</string>
+    <string name="subsfilters_channel_language_detect">Detect from each video</string>
+    <string name="subsfilters_channel_language_detect_body">For channels that post in more than one language</string>
+
+    <!-- Sottogruppi -->
+    <string name="subgroups_parent">Inside</string>
+    <string name="subgroups_parent_none">None</string>
+    <string name="subgroups_parent_has_subgroups">This group has subgroups, so it cannot go inside another group</string>
+    <string name="subgroups_delete_title">Delete “%1$s”?</string>
+    <plurals name="subgroups_delete_body">
+        <item quantity="one">Its subgroup will not be deleted: it becomes a normal group.</item>
+        <item quantity="other">Its %d subgroups will not be deleted: they become normal groups.</item>
+    </plurals>
 </resources>

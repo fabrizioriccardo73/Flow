@@ -17,6 +17,9 @@ sealed class LinkedAccountException(
     /** The build has no OAuth client id (see FORK.md). */
     class NotConfigured : LinkedAccountException("YouTube Sync OAuth client id is not configured")
 
+    /** This device is a TV: the account is linked on the phone, the YouTube Sync Device (ADR 0002). */
+    class NotOnTelevision : LinkedAccountException("A TV never links a YouTube account; link it on the phone")
+
     /** The viewer closed the browser or refused consent. */
     class Cancelled : LinkedAccountException("Authorization cancelled")
 

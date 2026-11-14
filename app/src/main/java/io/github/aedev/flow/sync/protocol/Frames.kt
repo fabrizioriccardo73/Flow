@@ -70,7 +70,7 @@ object SyncCollection {
             SUBSCRIBED_CHANNELS,
             SUBSCRIPTIONS,
             NOTES,
-        )
+        ) + io.github.aedev.flow.subsfilters.sync.ForkSync.COLLECTIONS // fork: Filtri iscrizioni
 }
 
 // --- Control-frame payloads (JSON; gzip+sealed by SyncCodec) ---

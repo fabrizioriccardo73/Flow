@@ -49,9 +49,18 @@ import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel // fork: Sottogruppi
 import io.github.aedev.flow.R
 import io.github.aedev.flow.data.model.Channel
 import io.github.aedev.flow.data.model.SubscriptionGroup
+import io.github.aedev.flow.subsfilters.ui.UngroupedChipToggle // fork: Filtri iscrizioni
+import io.github.aedev.flow.subgroups.selectionAfterDelete // fork: Sottogruppi
+import io.github.aedev.flow.subgroups.ui.SubgroupArrangement // fork: Sottogruppi
+import io.github.aedev.flow.subgroups.ui.SubgroupEditsViewModel // fork: Sottogruppi
+import io.github.aedev.flow.subgroups.ui.SubgroupParentRow // fork: Sottogruppi
+import io.github.aedev.flow.subgroups.ui.rememberSubgroupDeleteGuard // fork: Sottogruppi
+import io.github.aedev.flow.subgroups.ui.rememberSubgroupParent // fork: Sottogruppi
+import io.github.aedev.flow.subgroups.ui.subgroupIndent // fork: Sottogruppi
 import io.github.aedev.flow.ui.components.shared.ChannelAvatarImage
 import io.github.aedev.flow.ui.components.shared.FlowAlertDialog
 import io.github.aedev.flow.ui.components.shared.FlowReorderButtons
@@ -78,6 +87,7 @@ internal fun SubscriptionGroupsManagerDialog(
     onEdit: (SubscriptionGroup) -> Unit,
     onDelete: (SubscriptionGroup) -> Unit,
     onOrderChanged: (List<String>) -> Unit,
+    arrangement: SubgroupArrangement? = null, // fork: Sottogruppi
 ) {
     FlowAlertDialog(
         onDismissRequest = onDismiss,
@@ -91,12 +101,16 @@ internal fun SubscriptionGroupsManagerDialog(
                     modifier = Modifier.padding(vertical = ContentSpacing),
                 )
             } else {
-                SubscriptionGroupsReorderList(
-                    groups = groups,
-                    onEdit = onEdit,
-                    onDelete = onDelete,
-                    onOrderChanged = onOrderChanged,
-                )
+                Column { // fork: Filtri iscrizioni
+                    SubscriptionGroupsReorderList(
+                        groups = groups,
+                        onEdit = onEdit,
+                        onDelete = onDelete,
+                        onOrderChanged = onOrderChanged,
+                        arrangement = arrangement, // fork: Sottogruppi
+                    )
+                    UngroupedChipToggle() // fork: Filtri iscrizioni
+                } // fork: Filtri iscrizioni
             }
         },
         confirmButton = {
@@ -124,6 +138,7 @@ private fun SubscriptionGroupsReorderList(
     onEdit: (SubscriptionGroup) -> Unit,
     onDelete: (SubscriptionGroup) -> Unit,
     onOrderChanged: (List<String>) -> Unit,
+    arrangement: SubgroupArrangement? = null, // fork: Sottogruppi
 ) {
     val haptics = LocalHapticFeedback.current
     var ordered by remember(groups) { mutableStateOf(groups) }
@@ -135,6 +150,7 @@ private fun SubscriptionGroupsReorderList(
         }
 
     LaunchedEffect(reorderState.isAnyItemDragging) {
+        if (!reorderState.isAnyItemDragging) arrangement?.let { ordered = it.arrange(ordered) } // fork: Sottogruppi
         if (!reorderState.isAnyItemDragging && ordered.map { it.name } != groups.map { it.name }) {
             onOrderChanged(ordered.map { it.name })
         }
@@ -145,7 +161,9 @@ private fun SubscriptionGroupsReorderList(
         to: Int,
     ): Boolean {
         if (to !in ordered.indices) return false
-        ordered = ordered.toMutableList().apply { add(to, removeAt(from)) }
+        val moved = arrangement?.move(ordered, from, up = to < from) ?: ordered.toMutableList().apply { add(to, removeAt(from)) } // fork: Sottogruppi
+        if (moved == ordered) return false // fork: Sottogruppi
+        ordered = moved // fork: Sottogruppi
         onOrderChanged(ordered.map { it.name })
         return true
     }
@@ -173,6 +191,7 @@ private fun SubscriptionGroupsReorderList(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
+                                .subgroupIndent(arrangement?.isSubgroup(ordered, group.name) == true) // fork: Sottogruppi
                                 .semantics {
                                     customActions =
                                         buildList {
@@ -255,6 +274,7 @@ internal fun SubscriptionCreateEditGroupDialog(
     allChannels: List<Channel>,
     onDismiss: () -> Unit,
     onConfirm: (name: String, channelIds: List<String>) -> Unit,
+    extraContent: @Composable () -> Unit = {}, // fork: Sottogruppi
 ) {
     var groupName by remember { mutableStateOf(existingGroup?.name.orEmpty()) }
     var selectedChannelIds by remember { mutableStateOf(existingGroup?.channelIds.orEmpty().toSet()) }
@@ -285,6 +305,7 @@ internal fun SubscriptionCreateEditGroupDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
+                extraContent() // fork: Sottogruppi
                 FlowSearchField(
                     query = searchQuery,
                     onQueryChange = { searchQuery = it },
@@ -367,10 +388,19 @@ internal fun SubscriptionGroupDialogsHost(
 ) {
     var editing by remember { mutableStateOf(false) }
     var editingGroup by remember { mutableStateOf<SubscriptionGroup?>(null) }
+    val subgroupEdits: SubgroupEditsViewModel = hiltViewModel() // fork: Sottogruppi
+    val arrangement = remember(uiState.subgroupLinks) { SubgroupArrangement(uiState.subgroupLinks) } // fork: Sottogruppi
+    val deleteGuard = // fork: Sottogruppi
+        rememberSubgroupDeleteGuard(uiState.groups, uiState.subgroupLinks) { group -> // fork
+            selectionAfterDelete(group.name, uiState.selectedGroupName, uiState.groups, uiState.subgroupLinks)?.let(viewModel::selectGroup) // fork
+            viewModel.deleteGroup(group.name) // fork
+            subgroupEdits.deleted(group.name) // fork
+        } // fork
 
     if (!editing) {
+        deleteGuard.Dialog() // fork: Sottogruppi
         SubscriptionGroupsManagerDialog(
-            groups = uiState.managedGroups(),
+            groups = arrangement.arrange(uiState.managedGroups()), // fork: Sottogruppi
             onDismiss = onDismiss,
             onCreateNew = {
                 editingGroup = null
@@ -380,10 +410,12 @@ internal fun SubscriptionGroupDialogsHost(
                 editingGroup = group
                 editing = true
             },
-            onDelete = { group -> viewModel.deleteGroup(group.name) },
-            onOrderChanged = viewModel::setGroupOrder,
+            onDelete = deleteGuard::request, // fork: Sottogruppi
+            onOrderChanged = { names -> viewModel.setGroupOrder(arrangement.arrangeNames(names)) }, // fork: Sottogruppi
+            arrangement = arrangement, // fork: Sottogruppi
         )
     } else {
+        val parent = rememberSubgroupParent(editingGroup, uiState.groups, uiState.subgroupLinks) // fork: Sottogruppi
         SubscriptionCreateEditGroupDialog(
             existingGroup = editingGroup,
             allChannels = uiState.subscribedChannels,
@@ -395,8 +427,10 @@ internal fun SubscriptionGroupDialogsHost(
                 } else {
                     viewModel.updateGroup(existing.name, name, channelIds)
                 }
+                subgroupEdits.saved(existing?.name, name, parent.value) // fork: Sottogruppi
                 onDismiss()
             },
+            extraContent = { SubgroupParentRow(editingGroup?.name, uiState.groups, uiState.subgroupLinks, parent) }, // fork: Sottogruppi
         )
     }
 }

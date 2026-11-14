@@ -11,6 +11,7 @@ import io.github.aedev.flow.data.local.entity.SyncLogEntity
 import io.github.aedev.flow.data.local.entity.SyncPeerEntity
 import io.github.aedev.flow.data.profile.ProfileSlices
 import io.github.aedev.flow.di.ProfileDb
+import io.github.aedev.flow.subsfilters.sync.ForkSync // fork: Filtri iscrizioni, Sottogruppi
 import io.github.aedev.flow.sync.identity.DeviceIdentity
 import io.github.aedev.flow.sync.merge.LikesMerger
 import io.github.aedev.flow.sync.merge.NotesMerger
@@ -109,6 +110,8 @@ class SyncApplier
                         SyncCollection.MUSIC_BRAIN -> {
                             SyncSerialization.encodeMusicBrain(brains.exportMusicBrain(node, hlc))
                         }
+
+                        in ForkSync.COLLECTIONS -> ForkSync.of(context).export(c) // fork: Filtri iscrizioni, Sottogruppi
 
                         else -> {
                             null
@@ -232,6 +235,12 @@ class SyncApplier
                     settles += { tracker.settleSettings(merged) }
                     stats[SyncCollection.SETTINGS] = ApplyStats(updated = remote.size)
                 }
+                ForkSync.COLLECTIONS.forEach { name -> // fork: Filtri iscrizioni, Sottogruppi
+                    fresh[name]?.let { rc -> // fork
+                        failedCollection = name // fork
+                        stats[name] = ForkSync.of(context).apply(name, rc.lines) // fork
+                    } // fork
+                } // fork
 
                 // Brain: stateful CRDT merge + engine reload.
                 fresh[SyncCollection.FLOW_NEURO_BRAIN]?.let { rc ->

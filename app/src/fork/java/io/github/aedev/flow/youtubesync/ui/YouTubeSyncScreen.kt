@@ -80,6 +80,7 @@ fun YouTubeSyncScreen(
                     LinkMessage.UNLINKED -> R.string.youtube_sync_unlinked
                     LinkMessage.CANCELLED -> R.string.youtube_sync_link_cancelled
                     LinkMessage.NOT_CONFIGURED -> R.string.youtube_sync_not_configured
+                    LinkMessage.USE_PHONE -> R.string.youtube_sync_use_phone
                     LinkMessage.OFFLINE -> R.string.youtube_sync_link_offline
                     LinkMessage.FAILED -> R.string.youtube_sync_link_failed
                 }
@@ -110,9 +111,14 @@ fun YouTubeSyncScreen(
                 nav(
                     YouTubeSyncIndex.link,
                     icon = Icons.Outlined.Link,
-                    enabled = !working && viewModel.isConfigured,
+                    enabled = !working && viewModel.isConfigured && viewModel.canLinkHere,
                     showChevron = false,
-                    value = if (viewModel.isConfigured) null else context.getString(R.string.youtube_sync_not_configured),
+                    value =
+                        when {
+                            !viewModel.canLinkHere -> context.getString(R.string.youtube_sync_use_phone)
+                            !viewModel.isConfigured -> context.getString(R.string.youtube_sync_not_configured)
+                            else -> null
+                        },
                     onClick = { viewModel.authorizationIntent()?.let(launcher::launch) },
                 )
             } else {

@@ -1,5 +1,6 @@
 package io.github.aedev.flow.sync2.changes
 
+import io.github.aedev.flow.subsfilters.sync.ForkSync // fork: Filtri iscrizioni, Sottogruppi
 import io.github.aedev.flow.sync.apply.ReceivedCollection
 import io.github.aedev.flow.sync.protocol.CollectionWire
 import io.github.aedev.flow.sync.protocol.SyncCollection
@@ -72,6 +73,7 @@ private fun recordKey(
         SyncCollection.SUBSCRIPTIONS -> field("name")
         SyncCollection.SUBSCRIBED_CHANNELS -> field("channelId")
         SyncCollection.NOTES -> field("id")
+        in ForkSync.COLLECTIONS -> ForkSync.keyField(collection)?.let { field(it) } // fork: Filtri iscrizioni, Sottogruppi
         PROFILES -> field("link")
         in BRAINS -> ""
         else -> null

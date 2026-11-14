@@ -23,6 +23,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.R
 import io.github.aedev.flow.data.model.Channel
+import io.github.aedev.flow.subgroups.SubgroupChips // fork: Sottogruppi
+import io.github.aedev.flow.subgroups.ui.SubgroupChipRow // fork: Sottogruppi
+import io.github.aedev.flow.subsfilters.ui.LanguageFilterChip // fork: Filtri iscrizioni
 import io.github.aedev.flow.ui.components.shared.FlowFilterChip
 
 internal val GroupRowHorizontalPadding = 12.dp
@@ -71,6 +74,7 @@ internal fun SubscriptionsFeedHeader(
 
         HorizontalDivider()
 
+        val subgroupChips = SubgroupChips(state.groups, state.subgroupLinks, state.selectedChip()) // fork: Sottogruppi
         Row(
             modifier =
                 Modifier
@@ -83,6 +87,7 @@ internal fun SubscriptionsFeedHeader(
             horizontalArrangement = Arrangement.spacedBy(GroupChipSpacing),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            LanguageFilterChip() // fork: Filtri iscrizioni
             if (onPostsClick != null) {
                 FlowFilterChip(
                     label = stringResource(R.string.tab_posts),
@@ -91,8 +96,8 @@ internal fun SubscriptionsFeedHeader(
                 )
                 VerticalDivider(modifier = Modifier.height(PostsDividerHeight))
             }
-            val chips = state.groupChips()
-            val selected = state.selectedChip(chips)
+            val chips = subgroupChips.topLevel(state.groupChips()) // fork: Sottogruppi
+            val selected = subgroupChips.selectedTop // fork: Sottogruppi
             FlowFilterChip(
                 label = stringResource(R.string.group_all),
                 selected = selected == null,
@@ -117,5 +122,6 @@ internal fun SubscriptionsFeedHeader(
                 )
             }
         }
+        SubgroupChipRow(subgroupChips, onGroupSelected) // fork: Sottogruppi
     }
 }

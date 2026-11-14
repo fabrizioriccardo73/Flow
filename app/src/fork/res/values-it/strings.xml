@@ -18,6 +18,7 @@
     <string name="youtube_sync_link_offline">Google non è raggiungibile. Riprova quando sei online.</string>
     <string name="youtube_sync_link_failed">Google ha rifiutato il collegamento. Riprova.</string>
     <string name="youtube_sync_not_configured">Questa build non ha un client OAuth Google (vedi FORK.md)</string>
+    <string name="youtube_sync_use_phone">Collega l\'account dal telefono: questa TV riceve iscrizioni e playlist tramite la Device Sync</string>
     <string name="youtube_sync_sync_section">Sincronizzazione</string>
     <string name="youtube_sync_now">Sincronizza ora</string>
     <string name="youtube_sync_now_summary">Iscrizioni e playlist tra Flow e YouTube</string>
@@ -84,4 +85,27 @@
     <string name="coda_remove_desc">Toglilo da ciò che verrà riprodotto</string>
     <string name="coda_done">Fatto</string>
     <string name="coda_done_desc">Ho finito con questo video: toglilo dalla Coda e passa al prossimo</string>
+    <!-- Filtri iscrizioni: traduzioni di stringhe originali che Flow non ha in italiano -->
+    <string name="group_ungrouped">Non raggruppati</string>
+    <string name="content_settings_subs_ungrouped_title">Gruppo Non raggruppati</string>
+    <string name="content_settings_subs_ungrouped_subtitle">Un chip per i canali che non sono in nessun gruppo</string>
+    <string name="subsfilters_language_chip">Lingua</string>
+    <string name="subsfilters_language_dialog_title">Mostra i video in</string>
+    <string name="subsfilters_language_none_found">Nessuna lingua riconosciuta per ora tra questi video.</string>
+    <string name="subsfilters_language_unknown_note">I video di cui non si capisce la lingua si vedono sempre.</string>
+    <string name="subsfilters_language_apply">Applica</string>
+    <string name="subsfilters_language_show_all">Mostra tutto</string>
+    <string name="subsfilters_channel_language">Lingua</string>
+    <string name="subsfilters_channel_language_detect">Rileva da ogni video</string>
+    <string name="subsfilters_channel_language_detect_body">Per i canali che pubblicano in più lingue</string>
+
+    <!-- Sottogruppi -->
+    <string name="subgroups_parent">Dentro a</string>
+    <string name="subgroups_parent_none">Nessuno</string>
+    <string name="subgroups_parent_has_subgroups">Questo gruppo ha dei sottogruppi, quindi non può stare dentro un altro gruppo</string>
+    <string name="subgroups_delete_title">Eliminare “%1$s”?</string>
+    <plurals name="subgroups_delete_body">
+        <item quantity="one">Il suo sottogruppo non verrà eliminato: diventerà un gruppo normale.</item>
+        <item quantity="other">I suoi %d sottogruppi non verranno eliminati: diventeranno gruppi normali.</item>
+    </plurals>
 </resources>

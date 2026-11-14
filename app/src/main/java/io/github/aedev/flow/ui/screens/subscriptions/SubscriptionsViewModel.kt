@@ -22,6 +22,7 @@ import io.github.aedev.flow.data.subscriptions.SubscriptionWatchedVideos
 import io.github.aedev.flow.data.subscriptions.channelsWithNewUploads
 import io.github.aedev.flow.data.subscriptions.parseChannelSeenAt
 import io.github.aedev.flow.data.subscriptions.withHighQualityThumbnails
+import io.github.aedev.flow.subgroups.SubgroupLinks // fork: Sottogruppi
 import io.github.aedev.flow.utils.PerformanceDispatcher
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import io.github.aedev.flow.utils.formatYouTubeRelativeTime
@@ -105,6 +106,10 @@ class SubscriptionsViewModel
                     _uiState.update { it.copy(groups = groups) }
                 }
             }
+
+            viewModelScope.launch(PerformanceDispatcher.diskIO) { // fork: Sottogruppi
+                SubgroupLinks.observe().collect { links -> _uiState.update { it.copy(subgroupLinks = links) } } // fork
+            } // fork
 
             viewModelScope.launch(PerformanceDispatcher.diskIO) {
                 playerPreferences.effectiveShortsShelfEnabled.collect { enabled ->

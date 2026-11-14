@@ -49,6 +49,7 @@ import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.model.Channel
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.shorts.queue.ShortsQueueSource
+import io.github.aedev.flow.subsfilters.ui.rememberLanguageFiltered // fork: Filtri iscrizioni
 import io.github.aedev.flow.ui.components.layout.LocalFlowBottomInsets
 import io.github.aedev.flow.ui.components.layout.floatAboveBottomChrome
 import io.github.aedev.flow.ui.components.layout.topbar.FlowSearchTopBar
@@ -112,7 +113,8 @@ fun SubscriptionsScreen(
     val channels = rememberSubscriptionChannels(uiState)
     val sortedChannels = channels.sorted
     val topChannels = channels.quickAccess
-    val videos = uiState.recentVideos
+    val languageFiltered = rememberLanguageFiltered(uiState) // fork: Filtri iscrizioni
+    val videos = languageFiltered.recentVideos // fork: Filtri iscrizioni
     SubscriptionsFeedEffects(
         viewModel = viewModel,
         feedGridState = feedGridState,
@@ -259,7 +261,7 @@ fun SubscriptionsScreen(
                     )
                 } else {
                     SubscriptionsFeedContent(
-                        state = uiState,
+                        state = languageFiltered, // fork: Filtri iscrizioni
                         videos = videos,
                         topChannels = topChannels,
                         gridState = feedGridState,

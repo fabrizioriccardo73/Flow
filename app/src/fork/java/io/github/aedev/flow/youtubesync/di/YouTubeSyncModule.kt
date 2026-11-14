@@ -16,6 +16,7 @@ import io.github.aedev.flow.youtubesync.account.GoogleYouTubeIdentityApi
 import io.github.aedev.flow.youtubesync.account.KeystoreSecretSealer
 import io.github.aedev.flow.youtubesync.account.LinkedAccountStore
 import io.github.aedev.flow.youtubesync.account.OAuthConfig
+import io.github.aedev.flow.youtubesync.account.ThisDevice
 import io.github.aedev.flow.youtubesync.account.OAuthGateway
 import io.github.aedev.flow.youtubesync.account.SecretSealer
 import io.github.aedev.flow.youtubesync.account.YouTubeIdentityApi
@@ -91,6 +92,12 @@ abstract class YouTubeSyncModule {
         @Provides
         @Singleton
         fun oauthConfig(): OAuthConfig = OAuthConfig.fromBuild()
+
+        @Provides
+        @Singleton
+        fun thisDevice(
+            @ApplicationContext context: Context,
+        ): ThisDevice = ThisDevice.from(context)
 
         @Provides
         fun clock(): Clock = Clock { System.currentTimeMillis() }

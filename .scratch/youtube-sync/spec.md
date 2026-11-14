@@ -17,7 +17,7 @@ Un fork personale di Flow per Android (basato sulla variante FOSS, con un `appli
 - Collego l'account una volta tramite il **canale ufficiale** (API ufficiale di YouTube con OAuth, nel browser). Il token serve solo alla YouTube Sync: riproduzione e navigazione restano anonime come oggi.
 - Al primo collegamento Flow mi mostra un'anteprima dell'unione delle due liste e, dopo la mia conferma, porta entrambe le parti allo stesso stato senza cancellare nulla.
 - Da lì in poi, ciò che cambio in Flow arriva su YouTube subito; ciò che cambio su YouTube arriva in Flow all'apertura dell'app, ogni 6 ore in background o quando premo "Sincronizza ora".
-- Solo il telefono (il **YouTube Sync Device**) parla con YouTube. La Firestick resta con Flow originale e riceve tutto tramite la **Device Sync** esistente.
+- Solo il telefono (il **YouTube Sync Device**) parla con YouTube. La Firestick, con Flow originale o con il fork, non collega mai l'account e riceve tutto tramite la **Device Sync** esistente.
 - Protezioni: conferma prima di rimozioni di massa, elementi non rappresentabili mai toccati, modifiche in coda quando rete, quota o autorizzazione mancano.
 
 ## User Stories
@@ -111,7 +111,7 @@ Un fork personale di Flow per Android (basato sulla variante FOSS, con un `appli
 58. Come utente con telefono e Firestick, voglio che solo il telefono esegua la YouTube Sync, così che le modifiche non vengano inviate due volte a YouTube.
 59. Come utente, voglio che una modifica fatta sulla Firestick arrivi al telefono tramite la Device Sync e da lì a YouTube.
 60. Come utente, voglio che le novità lette da YouTube arrivino alla Firestick tramite la Device Sync.
-61. Come utente, voglio che la Firestick possa continuare a usare Flow originale, così da non dover aggiornare a mano un fork installato tramite sideload.
+61. Come utente, voglio poter usare sulla Firestick sia Flow originale sia il fork; con il fork, la Firestick non mi lascia collegare l'account e mi dice di farlo dal telefono.
 62. Come utente, voglio che i dati Flow-only (gruppi, preferiti, note, like) continuino a viaggiare tra i miei dispositivi con la Device Sync, senza mai andare su YouTube.
 
 ### Fork
@@ -123,7 +123,7 @@ Un fork personale di Flow per Android (basato sulla variante FOSS, con un `appli
 
 ## Implementation Decisions
 
-- **Base del fork**: variante FOSS di Flow per Android, con `applicationId` proprio. La Firestick resta su Flow originale; la Device Sync resta compatibile perché il suo protocollo non viene modificato.
+- **Base del fork**: variante FOSS di Flow per Android, con `applicationId` proprio. Sulla Firestick può girare Flow originale o il fork; la Device Sync resta compatibile perché il suo protocollo non viene modificato. Su una TV il fork blocca il collegamento dell'account (ADR 0002).
 - **Modulo YouTube Sync isolato**: tutto il codice nuovo vive in un'area separata. Le modifiche al codice originale si limitano a: punti di aggancio per accodare le modifiche locali, voci di interfaccia (collegamento, anteprima, stato, "Sincronizza ora"), registrazione del lavoro in background e del redirect OAuth.
 - **Integrazione con gli archivi di Flow** (ADR 0002): la YouTube Sync legge e scrive iscrizioni e playlist tramite la stessa interfaccia di accesso ai dati che usa la Device Sync. Le scritture provenienti da YouTube appaiono come modifiche locali e la Device Sync le propaga da sola. Non si estende il protocollo della Device Sync.
 - **Interfaccia `YouTubeAccount`**: un'astrazione dell'account remoto con le operazioni necessarie, cioè elencare, aggiungere e rimuovere iscrizioni; elencare le playlist distinguendo Owned Playlist e Saved Playlist; creare, rinominare ed eliminare playlist; elencare, aggiungere, rimuovere e riposizionare i video di una playlist. Gli errori sono tipizzati: quota esaurita, autorizzazione non valida, elemento non trovato, duplicato, errore transitorio. L'implementazione reale usa la YouTube Data API v3; i test usano una versione in memoria.

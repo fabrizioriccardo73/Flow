@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.aedev.flow.data.local.HomeFeedColumns
 import io.github.aedev.flow.data.model.Channel
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.subsfilters.ui.rememberLanguageFiltered // fork: Filtri iscrizioni
 import io.github.aedev.flow.ui.screens.subscriptions.SubscriptionGroupDialogsHost
 import io.github.aedev.flow.ui.screens.subscriptions.SubscriptionsEmptyState
 import io.github.aedev.flow.ui.screens.subscriptions.SubscriptionsFeedContent
@@ -48,11 +49,12 @@ fun TvSubscriptionsScreen(
     var manageShowsMusic by rememberSaveable { mutableStateOf(false) }
     var showGroupsDialog by remember { mutableStateOf(false) }
     val channels = rememberSubscriptionChannels(uiState)
+    val languageFiltered = rememberLanguageFiltered(uiState) // fork: Filtri iscrizioni
 
     SubscriptionsFeedEffects(
         viewModel = viewModel,
         feedGridState = feedGridState,
-        videos = uiState.recentVideos,
+        videos = languageFiltered.recentVideos, // fork: Filtri iscrizioni
         isManagingSubs = isManagingSubs,
     )
     BackHandler(enabled = isManagingSubs) { isManagingSubs = false }
@@ -85,8 +87,8 @@ fun TvSubscriptionsScreen(
 
             else -> {
                 SubscriptionsFeedContent(
-                    state = uiState,
-                    videos = uiState.recentVideos,
+                    state = languageFiltered, // fork: Filtri iscrizioni
+                    videos = languageFiltered.recentVideos, // fork: Filtri iscrizioni
                     topChannels = channels.quickAccess,
                     gridState = feedGridState,
                     columnPreference = HomeFeedColumns.AUTO,

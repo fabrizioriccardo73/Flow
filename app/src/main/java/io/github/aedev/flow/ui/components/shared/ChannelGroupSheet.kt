@@ -7,6 +7,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.res.stringResource
 import io.github.aedev.flow.R
 import io.github.aedev.flow.data.model.SubscriptionGroup
+import io.github.aedev.flow.subgroups.ui.rememberSubgroupSheetLayout // fork: Sottogruppi
+import io.github.aedev.flow.subgroups.ui.rowModifier // fork: Sottogruppi
+import io.github.aedev.flow.subsfilters.ui.ChannelLanguageRow // fork: Filtri iscrizioni
 
 @Composable
 fun ChannelGroupSheet(
@@ -16,9 +19,10 @@ fun ChannelGroupSheet(
     onCreateNew: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val layout = rememberSubgroupSheetLayout(groups) // fork: Sottogruppi
     val entries =
-        remember(groups, channelId) {
-            groups.map { group ->
+        remember(layout, channelId) { // fork: Sottogruppi
+            layout.groups.map { group -> // fork: Sottogruppi
                 CollectionSheetEntry(
                     id = group.name,
                     name = group.name,
@@ -38,5 +42,7 @@ fun ChannelGroupSheet(
         onToggle = { entry -> onToggle(entry.id, !entry.isSaved) },
         onCreateNew = onCreateNew,
         onDismiss = onDismiss,
+        header = { ChannelLanguageRow(channelId) }, // fork: Filtri iscrizioni
+        entryModifier = { entry -> layout.rowModifier(entry.id) }, // fork: Sottogruppi
     )
 }

@@ -22,7 +22,7 @@ Questo repository è un fork personale di [Flow-Tube/Flow](https://github.com/Fl
 | Varianti | `github`, `foss` | solo `foss` |
 | Firma | chiave ufficiale di Flow | chiave del fork |
 
-Il fork si installa **accanto** a Flow originale. La Device Sync resta compatibile: il telefono con il fork e la Firestick con Flow originale continuano ad accoppiarsi e a sincronizzarsi.
+Il fork si installa **accanto** a Flow originale. La Device Sync resta compatibile: il telefono con il fork si accoppia e si sincronizza sia con una Firestick con Flow originale sia con una Firestick con il fork. L'account YouTube si collega solo dal telefono: su una TV il fork blocca il collegamento (ADR 0002).
 
 ### Dove vivono le modifiche al codice originale
 
@@ -31,21 +31,28 @@ Per tenere semplici i merge dal progetto originale, le modifiche sono isolate:
 - `app/fork.gradle` contiene `applicationId`, la configurazione OAuth, la dipendenza AppAuth e le cartelle del fork. `app/build.gradle.kts` lo applica con **una sola riga** in fondo al file.
 - `app/src/fork/java/` e `app/src/fork/res/` contengono il codice (package `io.github.aedev.flow.youtubesync`) e le stringhe della YouTube Sync. `app/src/forkTest/java/` contiene i suoi test. `app/src/forkFoss/res/` contiene il nome nel launcher.
 - Le uniche righe toccate nei file originali, tutte marcate `// fork`, servono ad aggiungere la pagina "YouTube Sync" alle impostazioni. Sono in `SettingsDestination.kt`, `DestinationIndex.kt`, `SettingsDetail.kt` e `IntegrationsScreen.kt`.
+- `Makefile` contiene i comandi di build, test e firma del fork.
 - `.github/workflows/fork-build.yml` è la build del fork. I workflow originali (`build.yml`, `codeql.yml`, `labeler.yml`) **non vengono modificati**: sono disattivati dalle impostazioni Actions del fork.
 
 ## Build
 
 ### In locale
 
-```bash
-./gradlew :app:assembleFossRelease
-```
-
-Senza `release.keystore` nella root, l'APK di release esce **non firmato**. Per provare sul telefono senza chiave, usa la build di debug, che ha `applicationId` con suffisso `.debug`:
+Il `Makefile` nella root raccoglie i comandi del fork; `make` da solo li elenca.
 
 ```bash
-./gradlew :app:assembleFossDebug
+make release
 ```
+
+La release si firma con `release.keystore` nella root e con `storePassword`, `keyAlias` e `keyPassword` in `local.properties` (entrambi esclusi da git). La prima volta crea la chiave con `make keystore`. Senza chiave, `make release` si ferma, perché l'APK uscirebbe **non firmato** e non si potrebbe installare.
+
+Per provare senza chiave usa la build di debug, che ha `applicationId` con suffisso `.debug`. È molto più lenta della release (niente R8 e niente baseline profile): non usarla per giudicare le prestazioni, soprattutto sulla Firestick.
+
+```bash
+make debug
+```
+
+Sulla Firestick (32 bit) va installato l'APK `armeabi-v7a`.
 
 ### Con GitHub Actions
 

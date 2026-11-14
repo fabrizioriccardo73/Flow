@@ -6,6 +6,7 @@ import io.github.aedev.flow.data.local.ChannelSubscription
 import io.github.aedev.flow.data.model.Channel
 import io.github.aedev.flow.data.model.SubscriptionGroup
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.subgroups.scopeWithSubgroups // fork: Sottogruppi
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 
 enum class SubscriptionSortMode {
@@ -99,9 +100,11 @@ data class SubscriptionsUiState(
     /** Channels the last refresh could not reach at all; surfaced instead of silently showing less. */
     val failedChannelIds: Set<String> = emptySet(),
     val failedChannelReasons: Map<String, String> = emptyMap(),
+    val subgroupLinks: Map<String, String> = emptyMap(), // fork: Sottogruppi
 ) {
     /** The selected group's channels, which scope its refreshes and reads; null for every subscription. */
-    fun selectedGroupScope(): Set<String>? = groupSelectionScope(selectedChip(), groups, subscribedChannels.map { it.id })
+    fun selectedGroupScope(): Set<String>? =
+        scopeWithSubgroups(selectedChip(), groupSelectionScope(selectedChip(), groups, subscribedChannels.map { it.id }), groups, subgroupLinks) // fork: Sottogruppi
 
     /** The selected chip, or null for All when the stored selection has no chip, like a switched-off Ungrouped. */
     fun selectedChip(chips: List<SubscriptionGroup> = groupChips()): String? {

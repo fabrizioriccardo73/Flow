@@ -20,6 +20,7 @@ class LinkedAccountManager
         private val oauth: OAuthGateway,
         private val identity: YouTubeIdentityApi,
         private val config: OAuthConfig,
+        private val device: ThisDevice,
     ) {
         private val mutex = Mutex()
 
@@ -27,8 +28,17 @@ class LinkedAccountManager
 
         val isConfigured: Boolean get() = config.isConfigured
 
-        /** The browser intent that starts linking. Throws [LinkedAccountException.NotConfigured] without a client id. */
-        fun authorizationIntent(): Intent = oauth.authorizationIntent()
+        /** False on a TV: only the phone links an account and becomes the YouTube Sync Device. */
+        val canLinkHere: Boolean get() = !device.isTelevision
+
+        /**
+         * The browser intent that starts linking. Throws [LinkedAccountException.NotOnTelevision] on a TV
+         * and [LinkedAccountException.NotConfigured] without a client id.
+         */
+        fun authorizationIntent(): Intent {
+            requireLinkableHere()
+            return oauth.authorizationIntent()
+        }
 
         /**
          * Finishes linking with the browser's [result]: exchanges the code, reads the account's channel
@@ -36,6 +46,7 @@ class LinkedAccountManager
          */
         suspend fun completeLink(result: Intent?): LinkedAccount =
             mutex.withLock {
+                requireLinkableHere()
                 val authState = oauth.completeAuthorization(result)
                 val fresh = oauth.freshAccessToken(authState)
                 val account = identity.ownChannel(fresh.accessToken)
@@ -64,6 +75,10 @@ class LinkedAccountManager
                 runCatching { identity.revoke(token) }
                     .onFailure { Log.w(TAG, "Revoking the YouTube grant failed; local tokens are cleared anyway", it) }
             }
+        }
+
+        private fun requireLinkableHere() {
+            if (!canLinkHere) throw LinkedAccountException.NotOnTelevision()
         }
 
         private companion object {
